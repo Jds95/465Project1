@@ -6,9 +6,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include "constants.h"
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_ttf.h>
-#include "SDL/SDL_mixer.h"
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#include "SDL_mixer.h"
 #include "asteroid.h"
 #include "score.h"
 #include "LTimer.h"
@@ -18,7 +18,6 @@ and may not be redistributed without written permission.*/
 
 
 Asteroid asteroid[100];
-Asteroid fill[100];
 SDL_Rect zone1;
 SDL_Rect zone2;
 SDL_Rect zone3;
@@ -175,44 +174,16 @@ void terr_print()
             }
         }
     }
-    // For loop to scan the fill in asteroid array
-    for (int i = 0; i < 100; ++i)
-    {
-        // If the fill in asteroid is on the screen
-        if (fill[i].screen)
-        {
-            // Runs an overlap check vs the fill array and asteroid array
-            for (int l = 0; l < 100; ++l)
-            {
-                if (asteroid[l].screen)
-                {
-                    if (fill[i].overlap_check(asteroid[l]))
-                    {
-                        fill[i].screen = false;
-                    }
-                }
-                if (fill[l].screen)
-                {
-                    if (fill[i].overlap_check(fill[l]))
-                    {
-                        fill[i].screen = false;
-                    }
-                }
-            }
-        }
-    }
+    
+    
 
-    // For loop to scan both fill in and asteroid array
+    // For loop to scan both asteroid in and asteroid array
     for (int i = 0; i < 100; ++i)
     {
         // If they are on screen, it calls the print function to blit them
         if (asteroid[i].screen)
         {
             asteroid[i].print();
-        }
-        if (fill[i].screen)
-        {
-            fill[i].print();
         }
     }
 }
@@ -263,35 +234,6 @@ void safe_zone(const int & safe)
             asteroid[i].ast.y = rand() % 480;
         }
     }
-    for (int i = 0; i < 100; ++i)
-    {
-        bool flag = true;
-        if (fill[i].screen)
-        {
-            int left2 = fill[i].ast.x;
-            int right2 = fill[i].ast.x + fill[i].ast.w;
-            int top2 = fill[i].ast.y;
-            int bottom2 = fill[i].ast.y + fill[i].ast.h;
-            
-            // Check edges
-            if ( left1 > right2 )// Left 1 is right of right 2
-                flag = false; // No collision
-            
-            if ( right1 < left2 ) // Right 1 is left of left 2
-                flag = false; // No collision
-            
-            if ( top1 > bottom2 ) // Top 1 is below bottom 2
-                flag = false; // No collision
-            
-            if ( bottom1 < top2 ) // Bottom 1 is above top 2 
-                flag = false; // No collision
-            
-            if (flag == true)
-            {
-                fill[i].screen = false;
-            }
-        }
-    }
 }
 
 void fill_in(const int & safe)
@@ -305,11 +247,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60;
                 break;
             }
         }
@@ -318,11 +260,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 60;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 60;
                 break;
             }
         }
@@ -331,11 +273,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 120;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 120;
                 break;
             }
         }
@@ -344,11 +286,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 180;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 180;
                 break;
             }
         }
@@ -357,11 +299,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 240;    
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 240;    
                 break;
             }
         }
@@ -370,11 +312,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 300;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 300;
                 break;
             }
         }   
@@ -383,11 +325,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 360;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 360;
                 break;
             }
         }
@@ -396,11 +338,11 @@ void fill_in(const int & safe)
     {
         for (int i = 0; i < 100; ++i)
         {
-            if (fill[i].screen == false)
+            if (asteroid[i].screen == false)
             {
-                fill[i].screen = true;
-                fill[i].ast.x = 680;
-                fill[i].ast.y = rand() % 60 + 420;
+                asteroid[i].screen = true;
+                asteroid[i].ast.x = 680;
+                asteroid[i].ast.y = rand() % 60 + 420;
                 break;
             }
         }
@@ -428,36 +370,6 @@ bool collision_check(SDL_Rect & rect)
             int right1 = asteroid[i].ast.x + asteroid[i].ast.w - 2;
             int top1 = asteroid[i].ast.y - 4;
             int bottom1 = asteroid[i].ast.y + asteroid[i].ast.h - 2;
-            // Check edges
-            if ( left1 > right2 )// Left 1 is right of right 2
-                flag = false; // No collision
-            
-            if ( right1 < left2 ) // Right 1 is left of left 2
-                flag = false; // No collision
-            
-            if ( top1 > bottom2 ) // Top 1 is below bottom 2
-                flag = false; // No collision
-            
-            if ( bottom1 < top2 ) // Bottom 1 is above top 2 
-                flag = false; // No collision
-            if (flag == true)
-            {
-                check = true;
-                return check;
-            }
-        }
-    }
-     // Find edges of rect for the fill in array if it is on the screen
-    for (int i = 0; i < 100; ++i)
-    {
-        if (fill[i].screen)
-        {
-            bool flag = true;
-            
-            int left1 = fill[i].ast.x;
-            int right1 = fill[i].ast.x + fill[i].ast.w - 2;
-            int top1 = fill[i].ast.y;
-            int bottom1 = fill[i].ast.y + fill[i].ast.h - 2;
             // Check edges
             if ( left1 > right2 )// Left 1 is right of right 2
                 flag = false; // No collision

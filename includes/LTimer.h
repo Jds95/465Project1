@@ -4,8 +4,8 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <string>
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_ttf.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 
 class LTimer
