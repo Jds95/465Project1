@@ -18,8 +18,8 @@
 
 void init(int args, bool & operating_as_host)
 {
-	TTF_Init();
 	SDL_Init(SDL_INIT_EVERYTHING);
+    TTF_Init();
 	
 	//Initialize SDL_net.
 	if (SDLNet_Init() == -1)
@@ -451,15 +451,13 @@ bool collision_check(SDL_Rect & rect)
 }
 
 void coord()
-{      
+{
     back = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     bor1 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     bor2 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     bor3 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     bor4 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     gameOver = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
-    gameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
-    scoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
     play = TTF_RenderText_Solid(font, "Thanks for Playing!", {255,0,0});
     // Safe Zone Coordinates and dimensions
     zone1.x = 640;
@@ -725,13 +723,14 @@ void serverMain()
                 }
                	
                 
+                gameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
+                scoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
+                SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
+                
                 // Position score in center of screen
                 score.rect.x = 350;
                 score.rect.y = 200;
                 SDL_BlitSurface(gameOverTxt, NULL, gScreenSurface, &gameOverText);
-                 
-                SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
-               
                 scoreText.x = 240;
                 scoreText.y = 200;
                 SDL_BlitSurface(scoreTxt, NULL, gScreenSurface, &scoreText);
