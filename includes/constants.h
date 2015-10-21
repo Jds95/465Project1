@@ -8,6 +8,8 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+// Port used for networking
+const int PORT = 3750;
 
 void terr_generation();
 void terr_print();
@@ -15,6 +17,9 @@ bool overlap_check();
 void safe_zone(const int &);
 void fill_in(const int &);
 bool zone1_check();
+void coord();
+void serverMain();
+void clientMain();
 
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
@@ -27,12 +32,6 @@ SDL_Texture* gTexture = NULL;
 
 // Game screen Surface
 SDL_Surface* gScreenSurface= NULL;
-
-// Music
-//Mix_Music *music = NULL; 
-
-//Starts up SDL and creates window
-bool init();
 
 //Loads media
 bool loadMedia();

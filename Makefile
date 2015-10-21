@@ -1,6 +1,10 @@
 SDL_CFLAGS := $(shell sdl2-config --cflags)
-SDL_LDFLAGS := $(shell sdl2-config --libs) -lSDL2_image -lSDL2_ttf -lSDL2_mixer
+SDL_LDFLAGS := $(shell sdl2-config --libs)
 
+# Added the linkers to the LDFLAGS
+SDL_LDFLAGS += -lSDL2_net
+SDL_LDFLAGS += -lSDL2_ttf
+SDL_LDFLAGS += -lSDL2_image
 
 main: main.o
 	g++  main.o -o main $(SDL_LDFLAGS)
@@ -10,6 +14,11 @@ main.o: main.cpp
 
 run:
 	./main
+
+
+client:
+	./a.out localhost
+
 
 clean:	
 	rm -f  main main.o
