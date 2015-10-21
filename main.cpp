@@ -1,6 +1,3 @@
-/*This source code copyrighted by Lazy Foo' Productions (2004-2015)
-and may not be redistributed without written permission.*/
-
 //Using SDL, standard IO, and strings
 #include <SDL.h>
 #include <stdio.h>
@@ -16,48 +13,7 @@ and may not be redistributed without written permission.*/
 #include "menu.h"
 #include <sstream>
 #include <iostream>
-
-
-Asteroid asteroid[100];
-SDL_Rect zone1;
-SDL_Rect zone2;
-SDL_Rect zone3;
-SDL_Rect zone4;
-SDL_Rect zone5;
-SDL_Rect zone6;
-SDL_Rect zone7;
-SDL_Rect zone8;
-int safe = rand() % 8 + 1;
-LTimer timer;
-IPaddress ip;
-TCPsocket socket;
-SDLNet_SocketSet set;
-TCPsocket listener;
-TCPsocket client = 0;
-TTF_Font *font;
-
-//rects
-SDL_Rect SpaceSheep;    // sheep
-SDL_Rect background;    //background
-SDL_Rect gameOverScreen; //game over screen
-SDL_Rect gameOverText; // gameover text
-SDL_Rect scoreText; // score text
-SDL_Rect playAgain; // play again text
-SDL_Rect border1;   // top
-SDL_Rect border2;   // bottom
-SDL_Rect border3;   // left
-SDL_Rect border4;   // right
-//surfaces
-SDL_Surface *back;  // background
-SDL_Surface *bor1;  // top
-SDL_Surface *bor2;  // bottom
-SDL_Surface *bor3;  // left
-SDL_Surface *bor4;  // right
-SDL_Surface *gameOver; // gameover
-SDL_Surface *gameOverTxt; // gameover text
-SDL_Surface *scoreTxt; // score text
-SDL_Surface *play; // play again text
-
+#include "globals.h"
 
 
 void init(int args, bool & operating_as_host)
@@ -457,9 +413,7 @@ void fill_in(const int & safe)
 bool collision_check(SDL_Rect & rect)
 {
     // Takes the rect of the sheep
-    int left2 = rect.x;
     int right2 = rect.x + rect.w;
-    int top2 = rect.y;
     int bottom2 = rect.y + rect.h;
     bool check = false;
     
@@ -478,13 +432,13 @@ bool collision_check(SDL_Rect & rect)
             if ( left1 > right2 )// Left 1 is right of right 2
                 flag = false; // No collision
             
-            if ( right1 < left2 ) // Right 1 is left of left 2
+            if ( right1 < rect.x ) // Right 1 is left of left 2
                 flag = false; // No collision
             
             if ( top1 > bottom2 ) // Top 1 is below bottom 2
                 flag = false; // No collision
             
-            if ( bottom1 < top2 ) // Bottom 1 is above top 2 
+            if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
                 flag = false; // No collision
             if (flag == true)
             {
@@ -613,7 +567,6 @@ void coord()
 void serverMain()
 {
     initServer();
-    //Load media
     // Load font for game
     font = TTF_OpenFont("includes/game_over.ttf",60);
     
@@ -622,7 +575,7 @@ void serverMain()
         //Main loop flag
         bool quit = false;
         
-            //Event handler
+        //Event handler
         SDL_Event e;
         
         double sheepSpeedX = 3;         //sheep speed, duh
@@ -758,42 +711,44 @@ void serverMain()
             SDL_BlitSurface(score.surface, NULL, gScreenSurface, &score.rect);
             
             // GAME OVER screen
-                while (quit)
+            while (quit)
+            {
+                bool closeGame = false;
+                //Handle events on queue
+                if( SDL_PollEvent( &e ) != 0 )
                 {
-                	bool closeGame = false;
-                	
-                	SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
-                	
-                	// Position score in center of screen
-                	score.rect.x = 350;
-                	score.rect.y = 200;
-                	SDL_BlitSurface(gameOverTxt, NULL, gScreenSurface, &gameOverText);
-                	scoreText.x = 240;
-                	scoreText.y = 200;
-                	SDL_BlitSurface(scoreTxt, NULL, gScreenSurface, &scoreText);
-                	SDL_BlitSurface(score.surface, NULL, gScreenSurface, &score.rect);
-                	SDL_BlitSurface(play, NULL, gScreenSurface, &playAgain);
-                	
-                	//Handle events on queue
-                	if( SDL_PollEvent( &e ) != 0 )
-                	{
-                        //User requests quit
-                        if( e.type == SDL_QUIT )
-                        {
-                            closeGame = true;
-                        }     
-               		}
-               		
-               		// Close program
-               		if ( closeGame ) break;
-               		
-                	SDL_UpdateWindowSurface(gWindow);
-                	SDL_Delay(20);
+                    //User requests quit
+                    if( e.type == SDL_QUIT )
+                    {
+                        closeGame = true;
+                    }     
                 }
+               	
                 
+                // Position score in center of screen
+                score.rect.x = 350;
+                score.rect.y = 200;
+                SDL_BlitSurface(gameOverTxt, NULL, gScreenSurface, &gameOverText);
+                 
+                SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
+               
+                scoreText.x = 240;
+                scoreText.y = 200;
+                SDL_BlitSurface(scoreTxt, NULL, gScreenSurface, &scoreText);
+                SDL_BlitSurface(score.surface, NULL, gScreenSurface, &score.rect);
+                SDL_BlitSurface(play, NULL, gScreenSurface, &playAgain);
+                
+              
+                // Close program
+                if ( closeGame ) break;
+               	
                 SDL_UpdateWindowSurface(gWindow);
-                SDL_Delay(20); 
-                
+                SDL_Delay(20);
+            }
+            
+            SDL_UpdateWindowSurface(gWindow);
+            SDL_Delay(20); 
+            
         }             
     }
     //Free resources and close SDL

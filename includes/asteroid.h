@@ -47,32 +47,28 @@ public:
         bool flag = true;
         
         // Find edges of rect1
-        int left1 = ast.x;
         int right1 = ast.x + ast.w;
-        int top1 = ast.y;
         int bottom1 = ast.y + ast.h;
         
         // Find edges of rect2
-        int left2 = asteroid.ast.x;
         int right2 = asteroid.ast.x+ asteroid.ast.w;
-        int top2 = asteroid.ast.y;
         int bottom2 = asteroid.ast.y + asteroid.ast.h;
-        if (left1 == left2 && right1 == right2 &&
-            top1 == top2 && bottom1 == bottom2)
+        if (ast.x == asteroid.ast.x && right1 == right2 &&
+            ast.y == asteroid.ast.y && bottom1 == bottom2)
         {
             flag = false;
         }
         // Check edges
-        if ( left1 > right2 )// Left 1 is right of right 2
+        if ( ast.x > right2 )// Left 1 is right of right 2
             flag = false; // No collision
         
-        if ( right1 < left2 ) // Right 1 is left of left 2
+        if ( right1 < asteroid.ast.x ) // Right 1 is left of left 2
             flag = false; // No collision
         
-        if ( top1 > bottom2 ) // Top 1 is below bottom 2
+        if ( ast.y > bottom2 ) // Top 1 is below bottom 2
             flag = false; // No collision
         
-        if ( bottom1 < top2 ) // Bottom 1 is above top 2 
+        if ( bottom1 < asteroid.ast.y) // Bottom 1 is above top 2 
             flag = false; // No collision
 
 
