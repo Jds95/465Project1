@@ -19,7 +19,7 @@
 void init(int args, bool & operating_as_host)
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-    TTF_Init();
+  TTF_Init();
 	
 	//Initialize SDL_net.
 	if (SDLNet_Init() == -1)
@@ -300,7 +300,7 @@ void fill_in(const int & safe)
 {
     //*******************************************************************
     // Function looks at safe zone, if it isn't the safe zone, it should
-    // put an asteroid inside the frame of the zone, so not zone 1 is any
+    // put an asteroid inside the frame of the zone, so not zone 1 if any
     // y value between 0 to 60.
     //*******************************************************************
     if (safe != 1)
@@ -458,7 +458,6 @@ void coord()
     bor3 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     bor4 = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     gameOver = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
-    play = TTF_RenderText_Solid(font, "Thanks for Playing!", {255,0,0});
     // Safe Zone Coordinates and dimensions
     zone1.x = 640;
     zone1.y = 0;
@@ -725,6 +724,7 @@ void serverMain()
                 
                 gameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
                 scoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
+                play = TTF_RenderText_Solid(font, "Thanks for Playing!", {255,0,0});
                 SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
                 
                 // Position score in center of screen
