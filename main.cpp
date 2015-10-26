@@ -66,7 +66,7 @@ void initServer()
 	if (SDLNet_ResolveHost(&ip, NULL, PORT) == -1)
 	{
 		printf("SDLNet_ResolveHost: %s", SDLNet_GetError());
-	}
+ 	}
 	//Open the socket to listen for connections from the client
 	socket = SDLNet_TCP_Open(&ip);
 	if(!socket)
@@ -758,6 +758,11 @@ void serverMain()
 void clientMain(const char * serverName)
 {
     initClient(serverName);
+    if (socket == NULL)
+    {
+        std::cout << "Host is not operating" << std::endl;
+        return;
+    }
     // Load font for game
     font = TTF_OpenFont("includes/game_over.ttf",60);
     
