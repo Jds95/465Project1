@@ -17,7 +17,7 @@ run:
 
 
 client:
-	./a.out localhost
+	./main localhost
 
 
 clean:	
