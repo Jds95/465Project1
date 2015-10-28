@@ -581,11 +581,11 @@ void clientCheck()
 	}
 }
 
-void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket socket)
+void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket & client)
 {
     int sent;
-    sent = SDLNet_TCP_Send(socket, &astindex, sizeof(astindex));
-    if (sent != sizeof(client, asteroid))
+    sent = SDLNet_TCP_Send(client, &astindex, sizeof(astindex));
+    if (sent != sizeof(client, astindex))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
@@ -709,7 +709,7 @@ void serverMain()
                 for (int i = 0; i < 100; ++i)
                 {
                     int astindex = i;
-                    send_asteroid(asteroid[i], astindex, socket);
+                    send_asteroid(asteroid[i], astindex, client);
                     
                 }
             }
@@ -906,7 +906,7 @@ void clientMain(const char * serverName)
 
             while (SDLNet_CheckSockets(set, 0))
             {
-                int got = SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
+                int got = SDLNet_TCP_Recv(client, &astindex, sizeof(astindex));
                 if (got <= 0)
                 {
                     std::cerr << "Connection problem, quitting..." << std::endl;
