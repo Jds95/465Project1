@@ -20,7 +20,15 @@ public:
         ast.w = 32;
         ast.h = 32;
     }
-
+    Asteroid(const Asteroid & copyasteroid)
+    {
+        asteroid = SDL_LoadBMP("includes/asteroid.bmp");
+        ast.x = copyasteroid.ast.x;
+        ast.y = copyasteroid.ast.y;
+        ast.w = 32;
+        ast.h = 32;
+    }
+    
     void left()
     {
         if (ast.x < 5)

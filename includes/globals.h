@@ -21,9 +21,12 @@ SDLNet_SocketSet set;
 TCPsocket listener;
 TCPsocket client = 0;
 TTF_Font *font;
+bool clientInit = false;
+bool initTerrain = false;
 
 //rects
 SDL_Rect SpaceSheep;    // sheep
+SDL_Rect ClientSpaceSheep;
 SDL_Rect background;    //background
 SDL_Rect gameOverScreen; //game over screen
 SDL_Rect gameOverText; // gameover text
