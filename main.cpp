@@ -16,7 +16,7 @@
 #include "globals.h"
 
 
-void init(int args, bool & operating_as_host)
+void init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
@@ -26,21 +26,10 @@ void init(int args, bool & operating_as_host)
 	{
 		printf("SDLNet_Init: %s", SDLNet_GetError());
 	}
-
-	//Make Server or Client
-	if (args == 1)
-	{
-		operating_as_host = true;
-		std::cout << "Operating as host: clients connect to me." << std::endl;
-	}
-	else if (args == 2)
-	{
-		operating_as_host = false;
-		std::cout << "Operating as client: connecting to host..." << std::endl;
-	}
-
+    
+    
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-
+    
     gWindow = SDL_CreateWindow( "SpaceSheep Adventures", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
     
     if( gWindow == NULL )
@@ -53,10 +42,12 @@ void init(int args, bool & operating_as_host)
         gScreenSurface = SDL_GetWindowSurface( gWindow );
     }
     
+    
     if( !loadMedia() )
     {
         printf( "Failed to load media!\n" );
     }
+    
 
 }
 
@@ -589,23 +580,31 @@ void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket & client)
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    /*
-    sent = SDLNet_TCP_Send(socket, &asteroid.ast.x, sizeof(asteroid.ast.x));
-    if (sent != sizeof(socket, asteroid.ast.x))
+    
+    int asteroidx = asteroid.ast.x;
+    sent = SDLNet_TCP_Send(client, &asteroidx, sizeof(asteroidx));
+    if (sent != sizeof(client, asteroidx))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    sent = SDLNet_TCP_Send(socket, &asteroid.ast.y, sizeof(asteroid.ast.y));
-    if (sent != sizeof(socket, asteroid.ast.y))
+
+    int asteroidy = asteroid.ast.y;
+    sent = SDLNet_TCP_Send(client, &asteroidy, sizeof(asteroidy));
+    if (sent != sizeof(client, asteroidy))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    sent = SDLNet_TCP_Send(socket, &asteroid.screen, sizeof(asteroid.screen));
-    if (sent != sizeof(socket, asteroid.screen))
+
+    bool asteroidscreen = asteroid.screen;
+    sent = SDLNet_TCP_Send(client, &asteroidscreen, sizeof(asteroidscreen));
+    if (sent != sizeof(client, asteroidscreen))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    */
+    std::cout << "Index: " << astindex << " x: " << asteroidx
+                          << " y: " << asteroidy << " screen: "
+                          << asteroidscreen << std::endl;
+                
 }
 
 
@@ -828,101 +827,144 @@ void clientMain(const char * serverName)
     initClient(serverName);
     if (socket == NULL)
     {
-        std::cout << "Host is not operating" << std::endl;
+        std::cout << "\nHost is not operating" << std::endl;
         return;
     }
     // Load font for game
     font = TTF_OpenFont("includes/game_over.ttf",60);
     
-    if (!menu(gScreenSurface, font))
+    //Main loop flag
+    bool quit = false;
+    
+    //Event handler
+    SDL_Event e;
+    Asteroid clientAsteroid[100];
+    double ClientsheepSpeedX = 3;         //sheep speed, duh
+    double ClientsheepSpeedY = 3.5; 
+    bool clientsheep_screen = true;  
+    // initialize score counter, create score object, and create score timer
+    int clientscoreCount = 0;
+    Score clientscore;
+    
+    LTimer clientscoreTimer;
+    
+    //While application is running
+    while( !quit )
     {
-        //Main loop flag
-        bool quit = false;
-        int astindex;
         
-        //Event handler
-        SDL_Event e;
-        Asteroid clientAsteroid[100];
-        double ClientsheepSpeedX = 3;         //sheep speed, duh
-        double ClientsheepSpeedY = 3.5; 
-        bool clientsheep_screen = true;   //is sheep alive
-        int indextracker = 0; // keep track of index being sent via network
-        
-        // initialize score counter, create score object, and create score timer
-        int clientscoreCount = 0;
-        Score clientscore;
-        
-        LTimer clientscoreTimer;
-
-        //While application is running
-        while( !quit )
+        if (!clientscoreTimer.isStarted())
         {
-      
-            if (!clientscoreTimer.isStarted())
-            {
-                clientscoreTimer.start();
-            }
-            // update the score counter by 1 point every 1/10 of a second
-            if (clientscoreTimer.getTicks() >= 100)
-            {
-                ++clientscoreCount;
-                clientscoreTimer.stop();
-            }
-           	
+            clientscoreTimer.start();
+        }
+        // update the score counter by 1 point every 1/10 of a second
+        if (clientscoreTimer.getTicks() >= 100)
+        {
+            ++clientscoreCount;
+            clientscoreTimer.stop();
+        }
+        
+        
+        //movement
+        const Uint8 *state = SDL_GetKeyboardState(NULL);
+        if (state[SDL_SCANCODE_W])          //up
+        {
+            if (ClientSpaceSheep.y <= 35);    //if hitting the edge, don't move
             
-            //movement
-            const Uint8 *state = SDL_GetKeyboardState(NULL);
-            if (state[SDL_SCANCODE_W])          //up
-            {
-                if (ClientSpaceSheep.y <= 35);    //if hitting the edge, don't move
-                
-                else
-                    ClientSpaceSheep.y -= ClientsheepSpeedY; // else move
-            }
+            else
+                ClientSpaceSheep.y -= ClientsheepSpeedY; // else move
+        }
+        
+        if (state[SDL_SCANCODE_S])          //down
+        {
+            if (ClientSpaceSheep.y >= 422);
             
-            if (state[SDL_SCANCODE_S])          //down
-            {
-                if (ClientSpaceSheep.y >= 422);
-                
-                else
-                    ClientSpaceSheep.y += ClientsheepSpeedY;
-            }
+            else
+                ClientSpaceSheep.y += ClientsheepSpeedY;
+        }
+        
+        if (state[SDL_SCANCODE_A])          //left
+        {
+            if (ClientSpaceSheep.x <= 33);
             
-            if (state[SDL_SCANCODE_A])          //left
-            {
-                if (ClientSpaceSheep.x <= 33);
-                
-                else
-                    ClientSpaceSheep.x -= ClientsheepSpeedX;
-            }
+            else
+                ClientSpaceSheep.x -= ClientsheepSpeedX;
+        }
+        
+        if (state[SDL_SCANCODE_D])          //right
+        {
+            if (ClientSpaceSheep.x >= 580);
             
-            if (state[SDL_SCANCODE_D])          //right
+            else
+                ClientSpaceSheep.x += ClientsheepSpeedX;
+        }
+        
+        while (SDLNet_CheckSockets(set, 0))
+        {
+            int astindex;
+            int got = SDLNet_TCP_Recv(client, &astindex, sizeof(astindex));
+            if (got <= 0)
             {
-                if (ClientSpaceSheep.x >= 580);
-                
-                else
-                    ClientSpaceSheep.x += ClientsheepSpeedX;
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
-
-            while (SDLNet_CheckSockets(set, 0))
+            int asteroidx;
+            got = SDLNet_TCP_Recv(client, &asteroidx,
+                                  sizeof(asteroidx));
+            if (got <= 0)
             {
-                int got = SDLNet_TCP_Recv(client, &astindex, sizeof(astindex));
-                if (got <= 0)
-                {
-                    std::cerr << "Connection problem, quitting..." << std::endl;
-                    return;
-                }
-                
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
+            int asteroidy;
+            got = SDLNet_TCP_Recv(client, &asteroidy,
+                                  sizeof(asteroidy));
+            if (got <= 0)
+            {
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
+            }
+            bool asteroidscreen;
+            got = SDLNet_TCP_Recv(client, &asteroidscreen,
+                                  sizeof(asteroidscreen));
+            if (got <= 0)
+            {
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
+            }
+            std::cout << "Index: " << astindex << " x: " << asteroidx
+                      << " y: " << asteroidy << " screen: "
+                      << asteroidscreen << std::endl;
+            
         }
     }
 }
 
+
+
 int main(int argc, char* args[] )
 {
-    coord(); 
-    bool operating_as_host = true;
-    init(argc, operating_as_host);
+    coord();
+
+    // Is this program the host, or the client?
+    bool operating_as_host;
+    
+    // Check the command line arguments.
+    if (argc == 1)
+    {
+        operating_as_host = true;
+        std::cout << "Operating as host: clients connect to me." << std::endl;
+    }
+    else if (argc == 2)
+    {
+        operating_as_host = false;
+        std::cout << "Operating as client, connecting to " << args[1] << std::endl;
+    }
+    else
+    {
+        std::cerr << "Too many command line arguments" <<std::endl;
+        return 1;
+    }    
+    init();
 	//If no arguments, this is the server
 	if (operating_as_host == true)
 	{
