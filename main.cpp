@@ -500,7 +500,7 @@ void serverMain()
     {
         printf( "Failed to load stretching image!\n" );
     }
-
+    
    
     // Connection information
     IPaddress ip;
@@ -539,18 +539,17 @@ void serverMain()
         double sheepSpeedX = 3;         //sheep speed, duh
         double sheepSpeedY = 3.5; 
         bool sheep_screen = true;   //is sheep alive
-        bool send_info = false;
         SDL_Rect SpaceSheep;    // sheep
-      
-
-         
+        
+        
+        
         //sheep starting dimensions
         SpaceSheep.x = 300;
         SpaceSheep.y = 200;
         SpaceSheep.w = 25;
         SpaceSheep.h = 25;
         
-   
+        
         
         // initialize score counter, create score object, and create score timer
         int scoreCount = 0;
@@ -581,7 +580,7 @@ void serverMain()
                 ++scoreCount;
                 scoreTimer.stop();
             }
-           	 //movement
+            //movement
             const Uint8 *state = SDL_GetKeyboardState(NULL);
             if (state[SDL_SCANCODE_W])          //up
             {
@@ -590,7 +589,6 @@ void serverMain()
                 else
                 {
                     SpaceSheep.y -= sheepSpeedY; // else move
-                    send_info = true;
                 }
                 
             }
@@ -602,7 +600,6 @@ void serverMain()
                 else
                 {  
                     SpaceSheep.y += sheepSpeedY;
-                    send_info = true;
                 }
             }
             
@@ -613,7 +610,6 @@ void serverMain()
                 else
                 {
                     SpaceSheep.x -= sheepSpeedX;
-                    send_info = true;
                 }
             }
             
@@ -623,9 +619,7 @@ void serverMain()
                 
                 else
                 {
-                   
                     SpaceSheep.x += sheepSpeedX;
-                    send_info = true;
                 }
             }
             
@@ -638,7 +632,6 @@ void serverMain()
             terr_generation(); // Random generate asteroids
             fill_in(safe); // Fill in array 
             terr_print(); // Does final overlap check through array
-            
             paint(); // If they are on screen paint
             SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
             SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
@@ -665,47 +658,40 @@ void serverMain()
                         break;
                     case 1:
                         if (safe == 8)
-                            {
-                                safe -= 1;
-                            }
+                        {
+                            safe -= 1;
+                        }
                         else 
                         {
                             safe += 1;
                         }
-                            break;
+                        break;
                 }
             }
-                // Check to see if sheep hits any asteroids
+            // Check to see if sheep hits any asteroids
             //if (collision_check(SpaceSheep)) 
             //{
             //    sheep_screen = false;
             //    scoreTimer.stop();
             //    quit = true;
             //}
-                // Check to see if sheep is alive
+            // Check to see if sheep is alive
             if (sheep_screen)
             {
                 // finally blit sheep
                 SDL_BlitScaled(sheep, NULL, gScreenSurface, &SpaceSheep);   
             }
-            if (client != NULL)
-            {
-                 SDL_BlitScaled(clientsheepclone, NULL, gScreenSurface,
-                                &ClientSpaceSheepClone);
-            }
-
             
-                
             // Blit the score onto the screen
             SDL_Color score_color = {255, 0, 0};
             score.surface = TTF_RenderText_Solid(font, std::to_string(scoreCount).c_str(), score_color);
             SDL_BlitSurface(scoreTxt, NULL, gScreenSurface, &scoreText);
             SDL_BlitSurface(score.surface, NULL, gScreenSurface, &score.rect);
-
+            
             //-------------------------------------------------------------------
             // NETWORKING
             //-------------------------------------------------------------------
-
+            
             
             //If the client socket is still NULL, no one has connected yet
             //Check to see if someone wants to connect
@@ -723,31 +709,28 @@ void serverMain()
                 }	
             }
             
-
             if (client != NULL)
-            {
-                if (send_info)
+            {   
+                std::cout << "Trying to send to client\n";
+                int sent = SDLNet_TCP_Send(client, &SEND_SHIP,
+                                           sizeof(SEND_SHIP));
+                if (sent != sizeof(client, SEND_SHIP))
                 {
-                    std::cout << "Sending sheep position to client\n";
-                    //std::cout << "I am in send_x" << std::endl;
-                    int sent;
-                    sent = SDLNet_TCP_Send(socket, &SpaceSheep.x,
-                                           sizeof(SpaceSheep.x));
-                    if (sent != sizeof(socket, SpaceSheep.x))
-                    {
-                        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-                    }
-                    //std::cout << "I am in send_y" << std::endl;
-                    sent = SDLNet_TCP_Send(socket, &SpaceSheep.y,
-                                           sizeof(SpaceSheep.y));
-                    if (sent != sizeof(socket, SpaceSheep.y))
-                    {
-                        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-                    }
-                    std::cout << "Sent the info to the client\n";
+                    std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl; 
                 }
-                //std::cout << "Exited the send info \n";
-                send_info = false;
+                sent = SDLNet_TCP_Send(client, &SpaceSheep.x,
+                                       sizeof(SpaceSheep.x));
+                if (sent != sizeof(client, SpaceSheep.x))
+                {
+                    std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+                }
+                sent = SDLNet_TCP_Send(client, &SpaceSheep.y,
+                                       sizeof(SpaceSheep.y));
+                if (sent != sizeof(client, SpaceSheep.y))
+                {
+                    std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+                }
+                          
                 /*
                   for (int i = 0; i < 100; ++i)
                   {
@@ -756,26 +739,33 @@ void serverMain()
                   
                   }
                 */
-                while (SDLNet_CheckSockets(set, 0))
+            }
+            
+            while (SDLNet_CheckSockets(set, 0))
+            {
+                //std::cout << "Trying to get info from the client\n";
+                int tracker;
+                int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
+                
+                if (tracker = 0)
                 {
-                    std::cout << "Trying to receive info\n";
-                    int got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.x,
-                                    sizeof(ClientSpaceSheepClone.x));
+                    int got = SDLNet_TCP_Recv(socket,
+                                              &ClientSpaceSheepClone.x,
+                                              sizeof(ClientSpaceSheepClone.x));
                     if (got <= 0)
                     {
                         std::cout << "Problem receiving from client\n";
                     }
                     
                     got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
-                                    sizeof(ClientSpaceSheepClone.y));
+                                          sizeof(ClientSpaceSheepClone.y));
                     if (got <= 0)
                     {
-                        std::cout << "Problem reciving from client\n";
+                        std::cout << "Problem receiving from client\n";
                     }
-                 
-                }
-                
-            }
+                }    
+            }   
+        
             
             // GAME OVER screen
             while (quit)
@@ -790,7 +780,7 @@ void serverMain()
                         closeGame = true;
                     }     
                 }
-               	
+                
                 
                 gameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
                 scoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
@@ -810,7 +800,7 @@ void serverMain()
                 
                 // Close program
                 if ( closeGame ) break;
-               	
+                
                 SDL_UpdateWindowSurface(gWindow);
                 SDL_Delay(20);
             }
@@ -819,8 +809,8 @@ void serverMain()
             SDL_Delay(20); 
             
         }             
-    }
-        //Free resources and close SDL
+        
+//Free resources and close SDL
         SDLNet_TCP_Close(socket);
         SDLNet_TCP_Close(client);
         
@@ -830,8 +820,8 @@ void serverMain()
         SDL_FreeSurface (clientsheepclone);
         clientsheepclone = NULL;
         
-        close();
-        
+        close();   
+    }
 }
 
 
@@ -902,7 +892,8 @@ void clientMain(const char * serverName)
     int clientscoreCount = 0;
     Score clientscore;
     LTimer clientscoreTimer;
-    SDL_Rect SpaceSheep;  
+    SDL_Rect ClientSpaceSheep;
+    SDL_Rect SpaceSheep;
 
 
     ClientSpaceSheep.x = 300;
@@ -989,47 +980,56 @@ void clientMain(const char * serverName)
         }
         if (send_info)
         {
-            std::cout << "Did I try to send info to the server\n";
-            //std::cout << "I am in send_x" << std::endl;
-            int sent;
+            int sent = SDLNet_TCP_Send(socket, &SEND_SHIP,
+                                       sizeof(SEND_SHIP));
+            if (sent != sizeof(socket, SEND_SHIP))
+            {
+                std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl; 
+            }
             sent = SDLNet_TCP_Send(socket, &ClientSpaceSheep.x, sizeof(ClientSpaceSheep.x));
             if (sent != sizeof(socket, ClientSpaceSheep.x))
             {
                 std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
             }
-            //std::cout << "I am in send_y" << std::endl;
-           
             sent = SDLNet_TCP_Send(socket, &ClientSpaceSheep.y, sizeof(ClientSpaceSheep.y));
             if (sent != sizeof(socket, ClientSpaceSheep.y))
             {
                 std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
             }
-            std::cout << "I sent info to the server\n";
         }
-        //std::cout << "I exited the send info check\n";
         send_info = false;
         while (SDLNet_CheckSockets(set, 0))
         {
-            SDLNet_TCP_Recv(socket, &SpaceSheep.x, sizeof(SpaceSheep.x));
-            SDLNet_TCP_Recv(socket, &SpaceSheep.y, sizeof(SpaceSheep.y));
-            /*
-            int astindex;
-            SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
+            int tracker;
+            int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
             
-            int asteroidx;
-            SDLNet_TCP_Recv(socket, &asteroidx,
-                            sizeof(asteroidx));
-            int asteroidy;
-            SDLNet_TCP_Recv(socket, &asteroidy,
-                            sizeof(asteroidy));
-            
-            bool asteroidscreen;
-            SDLNet_TCP_Recv(socket, &asteroidscreen,
-                            sizeof(asteroidscreen));
-            clientAsteroid[astindex].screen = asteroidscreen;
-            clientAsteroid[astindex].ast.x = asteroidx;
-            clientAsteroid[astindex].ast.y = asteroidy;
+            if (tracker = 0)
+            {
+                SDLNet_TCP_Recv(socket, &SpaceSheep.x, sizeof(SpaceSheep.x));
+                SDLNet_TCP_Recv(socket, &SpaceSheep.y, sizeof(SpaceSheep.y));
+                std::cout << "Receiving from the server " << std::endl;
+            }
+            if (tracker = 1)
+            {
+                /*
+                  int astindex;
+                  SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
+                  
+                  int asteroidx;
+                  SDLNet_TCP_Recv(socket, &asteroidx,
+                  sizeof(asteroidx));
+                  int asteroidy;
+                  SDLNet_TCP_Recv(socket, &asteroidy,
+                  sizeof(asteroidy));
+                  
+                  bool asteroidscreen;
+                  SDLNet_TCP_Recv(socket, &asteroidscreen,
+                  sizeof(asteroidscreen));
+                  clientAsteroid[astindex].screen = asteroidscreen;
+                  clientAsteroid[astindex].ast.x = asteroidx;
+                  clientAsteroid[astindex].ast.y = asteroidy;
             */
+            }
         }
         SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
                        &ClientSpaceSheep);

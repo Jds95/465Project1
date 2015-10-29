@@ -11,6 +11,9 @@ const int SCREEN_HEIGHT = 480;
 // Port used for networking
 const int PORT = 3750;
 
+const int SEND_SHIP = 0;
+const int SEND_AST = 1;
+
 void terr_generation();
 void terr_print();
 bool overlap_check();
