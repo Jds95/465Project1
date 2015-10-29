@@ -11,8 +11,8 @@ const int SCREEN_HEIGHT = 480;
 // Port used for networking
 const int PORT = 3750;
 
-const int SEND_SHIP = 0;
-const int SEND_AST = 1;
+const int SEND_SHIP = 1;
+const int SEND_AST = 2;
 
 void terr_generation();
 void terr_print();

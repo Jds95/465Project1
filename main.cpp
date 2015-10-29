@@ -547,7 +547,7 @@ void serverMain()
         SpaceSheep.x = 300;
         SpaceSheep.y = 200;
         SpaceSheep.w = 25;
-        SpaceSheep.h = 25;
+        SpaceSheep.h = 25;        
         
         
         
@@ -681,6 +681,11 @@ void serverMain()
                 // finally blit sheep
                 SDL_BlitScaled(sheep, NULL, gScreenSurface, &SpaceSheep);   
             }
+            if (client != 0)
+            {
+                SDL_BlitScaled(clientsheepclone, NULL, gScreenSurface,
+                               &ClientSpaceSheepClone);
+            }
             
             // Blit the score onto the screen
             SDL_Color score_color = {255, 0, 0};
@@ -711,7 +716,6 @@ void serverMain()
             
             if (client != 0)
             {   
-                std::cout << "Trying to send to client\n";
                 int sent = SDLNet_TCP_Send(client, &SEND_SHIP,
                                            sizeof(SEND_SHIP));
                 if (sent != sizeof(client, SEND_SHIP))
@@ -744,7 +748,6 @@ void serverMain()
                 // RETURNING TO GAME LOOP
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    std::cout << "Trying to get info from the client\n";
                     int tracker;
                     int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
                     if (got <= 0)
@@ -752,24 +755,21 @@ void serverMain()
                         std::cerr << "Connection problem, quitting..." << std::endl;
                         return;
                     }
-                    if (tracker = 0)
+                    if (tracker = 1)
                     {
-                        int got = SDLNet_TCP_Recv(socket,
-                                                  &ClientSpaceSheepClone.x,
-                                                  sizeof(ClientSpaceSheepClone.x));
-                        if (got <= 0)
-                        {
-                            std::cout << "Problem receiving from client\n";
-                        }
+                        int ClientSpaceX;
+                        SDLNet_TCP_Recv(socket,&ClientSpaceX,
+                                                  sizeof(ClientSpaceX));
+                        int ClientSpaceY;
+                        SDLNet_TCP_Recv(socket, &ClientSpaceY,
+                                              sizeof(ClientSpaceY));
+                        ClientSpaceSheepClone.x = ClientSpaceX;
+                        ClientSpaceSheepClone.y = ClientSpaceY;
                         
-                        got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
-                                              sizeof(ClientSpaceSheepClone.y));
-                        if (got <= 0)
-                        {
-                            std::cout << "Problem receiving from client\n";
-                        }
+                        
                     }    
                 }
+                std::cout << "Do I exit the netcheck" << std::endl;
             }
         
             
@@ -901,6 +901,10 @@ void clientMain(const char * serverName)
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
 
+    SpaceSheep.x = 300;
+    SpaceSheep.y = 200;
+    SpaceSheep.w = 25;
+    SpaceSheep.h = 25;
 
     ClientSpaceSheep.x = 300;
     ClientSpaceSheep.y = 200;
@@ -1008,14 +1012,15 @@ void clientMain(const char * serverName)
         {
             int tracker;
             int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
-            
-            if (tracker = 0)
+            std::cout << tracker << std::endl;
+            if (tracker = 1)
             {
+                std::cout << "Do I enter this if statement" << std::endl;
                 SDLNet_TCP_Recv(socket, &SpaceSheep.x, sizeof(SpaceSheep.x));
                 SDLNet_TCP_Recv(socket, &SpaceSheep.y, sizeof(SpaceSheep.y));
-                std::cout << "Receiving from the server " << std::endl;
+             
             }
-            if (tracker = 1)
+            else if (tracker = 2)
             {
                 /*
                   int astindex;
@@ -1037,6 +1042,12 @@ void clientMain(const char * serverName)
             */
             }
         }
+        SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
+        SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
+        SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
+        SDL_BlitScaled(bor3, NULL, gScreenSurface, &border3);
+        SDL_BlitScaled(bor4, NULL, gScreenSurface, &border4);
+        
         SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
                        &ClientSpaceSheep);
         SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
