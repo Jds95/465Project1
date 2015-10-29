@@ -574,7 +574,29 @@ void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket & client)
     }
 }
 
+int client_sheepx()
+{
+    int x;
+    int got = SDLNet_TCP_Recv(socket, &x, sizeof(x));
+    if (got <= 0)
+    {
+        //std::cerr << "Connection problem, quitting..." << std::endl;
+        return -1;
+    }
+    return x;
+}
 
+int client_sheepy()
+{
+    int y;
+    int got = SDLNet_TCP_Recv(socket, &y, sizeof(y));
+    if (got <= 0)
+    {
+        //std::cerr << "Connection problem, quitting..." << std::endl;
+        return -1;
+    }
+    return y;
+}
 
 void serverMain()
 {
@@ -669,40 +691,26 @@ void serverMain()
             terr_generation(); // Random generate asteroids
             fill_in(safe); // Fill in array 
             terr_print(); // Does final overlap check through array
-            // If there is a client, need to send over new data to client
+
             if (client != 0)
             {
+                for (int i = 0; i < 100; ++i)
+                {
+                    int astindex = i;
+                    send_asteroid(asteroid[i], astindex, client);
+                    
+                }
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    
-                    std::cout << "Do we enter here?" << std::endl;
-                    /*
-                    int x;
-                    int got = SDLNet_TCP_Recv(socket, &x, sizeof(x));
-                    if (got <= 0)
-                    {
-                        std::cerr << "Connection problem, quitting..." << std::endl;
-                        return;
-                    }
+                    std::cout << "Test test" << std::endl;
+                    int x = client_sheepx();
                     ClientSpaceSheepClone.x = x;
-                    int y;
-                    got = SDLNet_TCP_Recv(socket, &y, sizeof(y));
-                    if (got <= 0)
-                    {
-                        std::cerr << "Connection problem, quitting..." << std::endl;
-                        return;
-                    }
+                    int y = client_sheepy();
                     ClientSpaceSheepClone.y = y;
-                    
-                    */
-                    for (int i = 0; i < 100; ++i)
-                    {
-                        int astindex = i;
-                        send_asteroid(asteroid[i], astindex, client);
-                        
-                    }
                 }
+                
             }
+        
             paint(); // If they are on screen paint
             SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
             SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
@@ -741,12 +749,12 @@ void serverMain()
                 }
             }
                 // Check to see if sheep hits any asteroids
-            if (collision_check(SpaceSheep)) 
-            {
-                sheep_screen = false;
-                scoreTimer.stop();
-                quit = true;
-            }
+            //if (collision_check(SpaceSheep)) 
+            //{
+            //    sheep_screen = false;
+            //    scoreTimer.stop();
+            //    quit = true;
+            //}
                 // Check to see if sheep is alive
             if (sheep_screen)
             {
@@ -870,86 +878,83 @@ void clientMain(const char * serverName)
         }
 
         const Uint8 *state = SDL_GetKeyboardState(NULL);
-            if (state[SDL_SCANCODE_W])          //up
+        if (state[SDL_SCANCODE_W])          //up
+        {
+            if (ClientSpaceSheep.y <= 35);    //if hitting the edge, don't move
+            
+            else
+                ClientSpaceSheep.y -= ClientsheepSpeedY; // else move
+        }
+        
+        if (state[SDL_SCANCODE_S])          //down
+        {
+            if (ClientSpaceSheep.y >= 422);
+            
+            else
+                ClientSpaceSheep.y += ClientsheepSpeedY;
+        }
+        
+        if (state[SDL_SCANCODE_A])          //left
+        {
+            if (ClientSpaceSheep.x <= 33);
+            
+            else
+                ClientSpaceSheep.x -= ClientsheepSpeedX;
+        }
+        
+        if (state[SDL_SCANCODE_D])          //right
+        {
+            if (ClientSpaceSheep.x >= 580);
+            
+            else
+                ClientSpaceSheep.x += ClientsheepSpeedX;
+        }
+        SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
+                       &ClientSpaceSheep);
+        while (SDLNet_CheckSockets(set, 0))
+        {
+            std::cout << "Are we ever in here at all?" << std::endl;
+            int astindex;
+            int got = SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
+            if (got <= 0)
             {
-                if (ClientSpaceSheep.y <= 35);    //if hitting the edge, don't move
-                
-                else
-                    ClientSpaceSheep.y -= ClientsheepSpeedY; // else move
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
-            
-            if (state[SDL_SCANCODE_S])          //down
+            int asteroidx;
+            got = SDLNet_TCP_Recv(socket, &asteroidx,
+                                  sizeof(asteroidx));
+            if (got <= 0)
             {
-                if (ClientSpaceSheep.y >= 422);
-                
-                else
-                    ClientSpaceSheep.y += ClientsheepSpeedY;
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
-            
-            if (state[SDL_SCANCODE_A])          //left
+            int asteroidy;
+            got = SDLNet_TCP_Recv(socket, &asteroidy,
+                                  sizeof(asteroidy));
+            if (got <= 0)
             {
-                if (ClientSpaceSheep.x <= 33);
-                
-                else
-                    ClientSpaceSheep.x -= ClientsheepSpeedX;
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
-            
-            if (state[SDL_SCANCODE_D])          //right
+            bool asteroidscreen;
+            got = SDLNet_TCP_Recv(socket, &asteroidscreen,
+                                  sizeof(asteroidscreen));
+            if (got <= 0)
             {
-                if (ClientSpaceSheep.x >= 580);
-                
-                else
-                    ClientSpaceSheep.x += ClientsheepSpeedX;
+                std::cerr << "Connection problem, quitting..." << std::endl;
+                return;
             }
-            SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
-                           &ClientSpaceSheep);
-
-            send_sheep(ClientSpaceSheep.x, ClientSpaceSheep.y);
-            // For some reason it is not checking to go in
-            while (SDLNet_CheckSockets(set, 0))
-            {
-                std::cout << "Are we ever in here at all?" << std::endl;
-                int astindex;
-                int got = SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
-                if (got <= 0)
-                {
-                    std::cerr << "Connection problem, quitting..." << std::endl;
-                    return;
-                }
-                int asteroidx;
-                got = SDLNet_TCP_Recv(socket, &asteroidx,
-                                          sizeof(asteroidx));
-                if (got <= 0)
-                {
-                        std::cerr << "Connection problem, quitting..." << std::endl;
-                        return;
-                }
-                int asteroidy;
-                got = SDLNet_TCP_Recv(socket, &asteroidy,
-                                      sizeof(asteroidy));
-                if (got <= 0)
-                {
-                    std::cerr << "Connection problem, quitting..." << std::endl;
-                    return;
-                }
-                bool asteroidscreen;
-                got = SDLNet_TCP_Recv(socket, &asteroidscreen,
-                                      sizeof(asteroidscreen));
-                if (got <= 0)
-                {
-                    std::cerr << "Connection problem, quitting..." << std::endl;
-                    return;
-                }
-                std::cout << "Index: " << astindex << " x: " << asteroidx
-                          << " y: " << asteroidy << " screen: "
-                          << asteroidscreen << std::endl;
-            }
-            
-            
-            
-            SDL_UpdateWindowSurface(gWindow);
-            SDL_Delay(20); 
-            
+            std::cout << "Index: " << astindex << " x: " << asteroidx
+                      << " y: " << asteroidy << " screen: "
+                      << asteroidscreen << std::endl;
+        }
+        
+        
+        
+        SDL_UpdateWindowSurface(gWindow);
+        SDL_Delay(20); 
+        
     }
     SDLNet_TCP_Close(socket);
     close();
@@ -957,6 +962,7 @@ void clientMain(const char * serverName)
 
 void send_sheep(int & x, int & y)
 {
+    std::cout << "Testing send_sheep" << std::endl;
     int sent;
     sent = SDLNet_TCP_Send(client, &x, sizeof(x));
     if (sent != sizeof(client, x))
