@@ -53,36 +53,6 @@ void init()
 
 }
 
-void initServer()
-{
-	//Connection Information
-	if (SDLNet_ResolveHost(&ip, NULL, PORT) == -1)
-	{
-		printf("SDLNet_ResolveHost: %s", SDLNet_GetError());
- 	}
-	//Open the socket to listen for connections from the client
-	socket = SDLNet_TCP_Open(&ip);
-	if(!socket)
-	{
-		printf("SDLNet_TCP_Open: %s", SDLNet_GetError());
-	}
-	//Prepare a Socketset so we can	check for messages from the client
-	set = SDLNet_AllocSocketSet(1);
-}
-
-void initClient(const char * serverName)
-{
-	if (SDLNet_ResolveHost(&ip, serverName, PORT) == -1)
-	{
-		printf("SDLNet_ResolveHost: &s /n", SDLNet_GetError());
-	}		
-	socket = SDLNet_TCP_Open(&ip);
-	if (!socket)
-	{
-		printf("SDLNet_TCP_Open: &s /n", SDLNet_GetError());
-	}
-	set = SDLNet_AllocSocketSet(1);
-}
 
 
 void terr_generation()
@@ -524,25 +494,6 @@ void coord()
     
 }
 
-void clientCheck()
-{
-	//If the client socket is still NULL, no one has connected yet
-	//Check to see if someone wants to connect
-	if (client == NULL)
-	{
-		client = SDLNet_TCP_Accept(socket);
-		//If it isn't zero anymore, the client socket is now connected
-		//Add it to the SocketSet so that we can check it for data later
-		if (client != NULL)
-		{
-			if (SDLNet_TCP_AddSocket(set, client) == -1)
-			{
-				printf("SDLNet_AddSocket: %s", SDLNet_GetError());
-			}
-		}	
-	}
-}
-
 void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket & client)
 {
     int sent;
@@ -574,33 +525,32 @@ void send_asteroid(Asteroid & asteroid, int astindex, TCPsocket & client)
     }
 }
 
-int client_sheepx()
-{
-    int x;
-    int got = SDLNet_TCP_Recv(socket, &x, sizeof(x));
-    if (got <= 0)
-    {
-        //std::cerr << "Connection problem, quitting..." << std::endl;
-        return -1;
-    }
-    return x;
-}
-
-int client_sheepy()
-{
-    int y;
-    int got = SDLNet_TCP_Recv(socket, &y, sizeof(y));
-    if (got <= 0)
-    {
-        //std::cerr << "Connection problem, quitting..." << std::endl;
-        return -1;
-    }
-    return y;
-}
 
 void serverMain()
 {
-    initServer();
+    // Connection information
+    IPaddress ip;
+    
+    // Resolve the argument into an IPaddress
+    if (SDLNet_ResolveHost(&ip, NULL, PORT) == -1)
+    {
+        std::cerr << "SDLNet_ResolveHost: " << SDLNet_GetError() << std::endl;
+        return;
+    }
+
+    // Open the socket to listen for connections from the client
+    TCPsocket socket = SDLNet_TCP_Open(&ip);
+    if(!socket)
+    {
+        std::cerr << "SDLNet_TCP_Open: " << SDLNet_GetError() << std::endl;
+        return;
+    }
+        
+    TCPsocket client = 0;
+
+    // Prepare a SocketSet so we can check for messages from the client
+    SDLNet_SocketSet set = SDLNet_AllocSocketSet(1);
+
     // Load font for game
     font = TTF_OpenFont("includes/game_over.ttf",60);
     
@@ -626,8 +576,6 @@ void serverMain()
         //While application is running
         while( !quit )
         {
-            if (clientInit == false) clientCheck(); // Check for client
-            
             if (!scoreTimer.isStarted())
             {
                 scoreTimer.start();
@@ -692,6 +640,22 @@ void serverMain()
             fill_in(safe); // Fill in array 
             terr_print(); // Does final overlap check through array
 
+            //If the client socket is still NULL, no one has connected yet
+            //Check to see if someone wants to connect
+            if (client == NULL)
+            {
+                client = SDLNet_TCP_Accept(socket);
+                //If it isn't zero anymore, the client socket is now connected
+                //Add it to the SocketSet so that we can check it for data later
+                if (client != NULL)
+                {
+                    if (SDLNet_TCP_AddSocket(set, client) == -1)
+                    {
+                        printf("SDLNet_AddSocket: %s", SDLNet_GetError());
+                    }
+                }	
+            }
+            
             if (client != 0)
             {
                 for (int i = 0; i < 100; ++i)
@@ -702,11 +666,18 @@ void serverMain()
                 }
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    std::cout << "Test test" << std::endl;
-                    int x = client_sheepx();
+                    //std::cout << "Server receiving x " << std::endl;
+                    int x;
+                    SDLNet_TCP_Recv(socket, &x, sizeof(x));
+                    
                     ClientSpaceSheepClone.x = x;
-                    int y = client_sheepy();
+                    //std::cout << "Server recieving y " << std::endl;
+                    int y;
+                    SDLNet_TCP_Recv(socket, &y, sizeof(y));
+                    
                     ClientSpaceSheepClone.y = y;
+                    std::cout << ClientSpaceSheepClone.x << ' '
+                              << ClientSpaceSheepClone.y << std::endl;
                 }
                 
             }
@@ -771,6 +742,8 @@ void serverMain()
             SDL_BlitSurface(score.surface, NULL, gScreenSurface, &score.rect);
 
             
+
+            
             // GAME OVER screen
             while (quit)
             {
@@ -824,7 +797,35 @@ void serverMain()
 
 void clientMain(const char * serverName)
 {
-    initClient(serverName);
+    // Connection information
+    IPaddress ip;
+    
+    // Resolve the argument into an IPaddress
+    if (SDLNet_ResolveHost(&ip, serverName, PORT) == -1)
+    {
+        std::cerr << "SDLNet_ResolveHost: " << SDLNet_GetError() << std::endl;
+        return;
+    }
+
+    // Open a socket to communicate with the server
+    TCPsocket socket = SDLNet_TCP_Open(&ip);
+    if(!socket)
+    {
+        std::cerr << "SDLNet_TCP_Open: " << SDLNet_GetError() << std::endl;
+        return;
+    }
+
+    // Create a "socket set" with the new socket, so that you can check
+    // to see if the server has sent anything.
+    SDLNet_SocketSet set = SDLNet_AllocSocketSet(1);
+    if(!set)
+        std::cerr << "SDLNet_AllocSocketSet: " << SDLNet_GetError() << std::endl;
+    else
+    {
+        if (SDLNet_TCP_AddSocket(set, socket) == -1)
+            std::cerr << "SDLNet_AddSocket: " << SDLNet_GetError() << std::endl;
+    }
+    
     if (socket == NULL)
     {
         std::cout << "\nHost is not operating" << std::endl;
@@ -841,7 +842,8 @@ void clientMain(const char * serverName)
     Asteroid clientAsteroid[100];
     double ClientsheepSpeedX = 3;         //sheep speed, duh
     double ClientsheepSpeedY = 3.5; 
-    bool clientsheep_screen = true;  
+    bool clientsheep_screen = true;
+    bool send_info = false;
     // initialize score counter, create score object, and create score timer
     int clientscoreCount = 0;
     Score clientscore;
@@ -883,7 +885,10 @@ void clientMain(const char * serverName)
             if (ClientSpaceSheep.y <= 35);    //if hitting the edge, don't move
             
             else
-                ClientSpaceSheep.y -= ClientsheepSpeedY; // else move
+            {
+                ClientSpaceSheep.y -= ClientsheepSpeedY;// else move
+                send_info = true;
+            }   
         }
         
         if (state[SDL_SCANCODE_S])          //down
@@ -891,7 +896,10 @@ void clientMain(const char * serverName)
             if (ClientSpaceSheep.y >= 422);
             
             else
+            {
                 ClientSpaceSheep.y += ClientsheepSpeedY;
+                send_info = true;
+            }
         }
         
         if (state[SDL_SCANCODE_A])          //left
@@ -899,7 +907,10 @@ void clientMain(const char * serverName)
             if (ClientSpaceSheep.x <= 33);
             
             else
+            {
                 ClientSpaceSheep.x -= ClientsheepSpeedX;
+                send_info = true;
+            }
         }
         
         if (state[SDL_SCANCODE_D])          //right
@@ -907,75 +918,72 @@ void clientMain(const char * serverName)
             if (ClientSpaceSheep.x >= 580);
             
             else
+            {
                 ClientSpaceSheep.x += ClientsheepSpeedX;
+                send_info = true;
+            }
         }
         SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
                        &ClientSpaceSheep);
+       
         while (SDLNet_CheckSockets(set, 0))
         {
-            std::cout << "Are we ever in here at all?" << std::endl;
+            if (send_info)
+            {
+                //std::cout << "I am in send_x" << std::endl;
+                int sent;
+                int x = ClientSpaceSheep.x;
+                sent = SDLNet_TCP_Send(socket, &x, sizeof(x));
+                if (sent != sizeof(socket, x))
+                {
+                    std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+                }
+                //std::cout << "I am in send_y" << std::endl;
+                int y = ClientSpaceSheep.y;
+                sent = SDLNet_TCP_Send(socket, &y, sizeof(y));
+                if (sent != sizeof(socket, y))
+                {
+                    std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+                }
+            }
+            send_info = false;
             int astindex;
-            int got = SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
-            if (got <= 0)
-            {
-                std::cerr << "Connection problem, quitting..." << std::endl;
-                return;
-            }
+            SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
+            
             int asteroidx;
-            got = SDLNet_TCP_Recv(socket, &asteroidx,
+            SDLNet_TCP_Recv(socket, &asteroidx,
                                   sizeof(asteroidx));
-            if (got <= 0)
-            {
-                std::cerr << "Connection problem, quitting..." << std::endl;
-                return;
-            }
             int asteroidy;
-            got = SDLNet_TCP_Recv(socket, &asteroidy,
+            SDLNet_TCP_Recv(socket, &asteroidy,
                                   sizeof(asteroidy));
-            if (got <= 0)
-            {
-                std::cerr << "Connection problem, quitting..." << std::endl;
-                return;
-            }
+            
             bool asteroidscreen;
-            got = SDLNet_TCP_Recv(socket, &asteroidscreen,
+            SDLNet_TCP_Recv(socket, &asteroidscreen,
                                   sizeof(asteroidscreen));
-            if (got <= 0)
-            {
-                std::cerr << "Connection problem, quitting..." << std::endl;
-                return;
-            }
-            std::cout << "Index: " << astindex << " x: " << asteroidx
-                      << " y: " << asteroidy << " screen: "
-                      << asteroidscreen << std::endl;
+            //std::cout << "index: " << astindex
+            //          << " x " << asteroidx
+            //          << " y " << asteroidy << std::endl;
+            clientAsteroid[astindex].screen = asteroidscreen;
+            clientAsteroid[astindex].ast.x = asteroidx;
+            clientAsteroid[astindex].ast.y = asteroidy;
         }
-        
-        
-        
-        SDL_UpdateWindowSurface(gWindow);
-        SDL_Delay(20); 
-        
+        for (int i = 0; i < 100; ++i)
+        {
+            if (clientAsteroid[i].screen)
+            {
+                clientAsteroid[i].print();
+            }
+        }
     }
+    
+    
+    SDL_UpdateWindowSurface(gWindow);
+    SDL_Delay(20); 
+    
+    
     SDLNet_TCP_Close(socket);
     close();
 }
-
-void send_sheep(int & x, int & y)
-{
-    std::cout << "Testing send_sheep" << std::endl;
-    int sent;
-    sent = SDLNet_TCP_Send(client, &x, sizeof(x));
-    if (sent != sizeof(client, x))
-    {
-        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-    }
-    sent = SDLNet_TCP_Send(client, &y, sizeof(y));
-    if (sent != sizeof(client, x))
-    {
-        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-    }
-}
-
 
 int main(int argc, char* args[] )
 {

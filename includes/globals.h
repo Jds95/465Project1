@@ -15,10 +15,10 @@ int safe = rand() % 8 + 1;
 LTimer timer;
 
 // Global Network Variables, 
-IPaddress ip;
-TCPsocket socket = NULL;
-SDLNet_SocketSet set = NULL;
-TCPsocket client = NULL;
+//IPaddress ip;
+//TCPsocket socket = NULL;
+//SDLNet_SocketSet set = NULL;
+//TCPsocket client = NULL;
 TTF_Font *font;
 bool clientInit = false;
 bool initTerrain = false;
