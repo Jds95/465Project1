@@ -16,10 +16,9 @@ LTimer timer;
 
 // Global Network Variables, 
 IPaddress ip;
-TCPsocket socket;
-SDLNet_SocketSet set;
-TCPsocket listener;
-TCPsocket client = 0;
+TCPsocket socket = NULL;
+SDLNet_SocketSet set = NULL;
+TCPsocket client = NULL;
 TTF_Font *font;
 bool clientInit = false;
 bool initTerrain = false;
