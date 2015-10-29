@@ -547,7 +547,12 @@ void serverMain()
         SpaceSheep.x = 300;
         SpaceSheep.y = 200;
         SpaceSheep.w = 25;
-        SpaceSheep.h = 25;        
+        SpaceSheep.h = 25;
+        
+        ClientSpaceSheepClone.x = 300;
+        ClientSpaceSheepClone.y = 200;
+        ClientSpaceSheepClone.w = 25;
+        ClientSpaceSheepClone.h = 25;   
         
         
         
