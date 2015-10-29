@@ -65,9 +65,6 @@ void close()
     SDL_FreeSurface( gStretchedSurface );
     gStretchedSurface = NULL;
 
-    SDL_FreeSurface (sheep);
-    sheep = NULL;
-
     SDL_FreeSurface (gScreenSurface);
     gScreenSurface = NULL;
 
@@ -731,6 +728,7 @@ void serverMain()
             {
                 if (send_info)
                 {
+                    std::cout << "Sending sheep position to client\n";
                     //std::cout << "I am in send_x" << std::endl;
                     int sent;
                     sent = SDLNet_TCP_Send(socket, &SpaceSheep.x,
@@ -746,7 +744,9 @@ void serverMain()
                     {
                         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
                     }
+                    std::cout << "Sent the info to the client\n";
                 }
+                //std::cout << "Exited the send info \n";
                 send_info = false;
                 /*
                   for (int i = 0; i < 100; ++i)
@@ -758,18 +758,21 @@ void serverMain()
                 */
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    //std::cout << "Server receiving x " << std::endl;
-                    int x;
-                    int got = SDLNet_TCP_Recv(socket, &x, sizeof(x));
-                    ClientSpaceSheepClone.x = x;
-                    //std::cout << "Server recieving y " << std::endl;
+                    std::cout << "Trying to receive info\n";
+                    int got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.x,
+                                    sizeof(ClientSpaceSheepClone.x));
+                    if (got <= 0)
+                    {
+                        std::cout << "Problem receiving from client\n";
+                    }
                     
-                    int y;
-                    got = SDLNet_TCP_Recv(socket, &y, sizeof(y));
-                    
-                    ClientSpaceSheepClone.y = y;
-                    //std::cout << ClientSpaceSheepClone.x << ' '
-                    //          << ClientSpaceSheepClone.y << std::endl;
+                    got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
+                                    sizeof(ClientSpaceSheepClone.y));
+                    if (got <= 0)
+                    {
+                        std::cout << "Problem reciving from client\n";
+                    }
+                 
                 }
                 
             }
@@ -820,6 +823,13 @@ void serverMain()
         //Free resources and close SDL
         SDLNet_TCP_Close(socket);
         SDLNet_TCP_Close(client);
+        
+        SDL_FreeSurface (sheep);
+        sheep = NULL;
+        
+        SDL_FreeSurface (clientsheepclone);
+        clientsheepclone = NULL;
+        
         close();
         
 }
@@ -979,22 +989,24 @@ void clientMain(const char * serverName)
         }
         if (send_info)
         {
+            std::cout << "Did I try to send info to the server\n";
             //std::cout << "I am in send_x" << std::endl;
             int sent;
-            int x = ClientSpaceSheep.x;
-            sent = SDLNet_TCP_Send(socket, &x, sizeof(x));
-            if (sent != sizeof(socket, x))
+            sent = SDLNet_TCP_Send(socket, &ClientSpaceSheep.x, sizeof(ClientSpaceSheep.x));
+            if (sent != sizeof(socket, ClientSpaceSheep.x))
             {
                 std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
             }
             //std::cout << "I am in send_y" << std::endl;
-            int y = ClientSpaceSheep.y;
-            sent = SDLNet_TCP_Send(socket, &y, sizeof(y));
-            if (sent != sizeof(socket, y))
+           
+            sent = SDLNet_TCP_Send(socket, &ClientSpaceSheep.y, sizeof(ClientSpaceSheep.y));
+            if (sent != sizeof(socket, ClientSpaceSheep.y))
             {
                 std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
             }
+            std::cout << "I sent info to the server\n";
         }
+        //std::cout << "I exited the send info check\n";
         send_info = false;
         while (SDLNet_CheckSockets(set, 0))
         {
@@ -1024,13 +1036,21 @@ void clientMain(const char * serverName)
         SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
                        &SpaceSheep);
         
-    }
+    
     
     
     SDL_UpdateWindowSurface(gWindow);
-    SDL_Delay(20); 
+    SDL_Delay(20);
+    }
     
     
+    SDL_FreeSurface (sheepclone);
+    sheepclone = NULL;
+    
+    SDL_FreeSurface (clientsheep);
+    clientsheep = NULL;
+
+
     SDLNet_TCP_Close(socket);
     close();
 }
