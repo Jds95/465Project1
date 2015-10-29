@@ -709,7 +709,7 @@ void serverMain()
                 }	
             }
             
-            if (client != NULL)
+            if (client != 0)
             {   
                 std::cout << "Trying to send to client\n";
                 int sent = SDLNet_TCP_Send(client, &SEND_SHIP,
@@ -739,32 +739,38 @@ void serverMain()
                   
                   }
                 */
-            }
-            
-            while (SDLNet_CheckSockets(set, 0))
-            {
-                //std::cout << "Trying to get info from the client\n";
-                int tracker;
-                int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
-                
-                if (tracker = 0)
+
+                // FOR SOME REASON GETTING STUCK INSDIE THIS BLOCK AND NOT
+                // RETURNING TO GAME LOOP
+                while (SDLNet_CheckSockets(set, 0))
                 {
-                    int got = SDLNet_TCP_Recv(socket,
-                                              &ClientSpaceSheepClone.x,
-                                              sizeof(ClientSpaceSheepClone.x));
+                    std::cout << "Trying to get info from the client\n";
+                    int tracker;
+                    int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
                     if (got <= 0)
                     {
-                        std::cout << "Problem receiving from client\n";
+                        std::cerr << "Connection problem, quitting..." << std::endl;
+                        return;
                     }
-                    
-                    got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
-                                          sizeof(ClientSpaceSheepClone.y));
-                    if (got <= 0)
+                    if (tracker = 0)
                     {
-                        std::cout << "Problem receiving from client\n";
-                    }
-                }    
-            }   
+                        int got = SDLNet_TCP_Recv(socket,
+                                                  &ClientSpaceSheepClone.x,
+                                                  sizeof(ClientSpaceSheepClone.x));
+                        if (got <= 0)
+                        {
+                            std::cout << "Problem receiving from client\n";
+                        }
+                        
+                        got = SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
+                                              sizeof(ClientSpaceSheepClone.y));
+                        if (got <= 0)
+                        {
+                            std::cout << "Problem receiving from client\n";
+                        }
+                    }    
+                }
+            }
         
             
             // GAME OVER screen
