@@ -24,7 +24,7 @@ bool clientInit = false;
 bool initTerrain = false;
 
 //rects
-SDL_Rect SpaceSheep;    // sheep
+//SDL_Rect SpaceSheep;    // sheep
 SDL_Rect ClientSpaceSheep;
 SDL_Rect background;    //background
 SDL_Rect gameOverScreen; //game over screen
