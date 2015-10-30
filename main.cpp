@@ -697,9 +697,8 @@ void serverMain()
                         break;
                 }
             }
-            // Check to see if sheep hits any asteroids
 
-
+            // Check to see if sheep(s) hits any asteroids
             if (collision_check(SpaceSheep)) 
             {
                part1dead = true;
@@ -739,7 +738,6 @@ void serverMain()
                     hit2 = false;
                     part2dead = false;
                 }
-
 
                 if (part1dead == true && part2dead == true)
                     superdead = true;
