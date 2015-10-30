@@ -1211,17 +1211,6 @@ void clientMain(const char * serverName)
                     clientquit = true;
                 }
 
-        if (red_sq)
-        {
-            sheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
-            SDL_FillRect(sheepclone, NULL, SDL_MapRGB(sheepclone->format, 255, 0, 0));
-              
-        }
-        else
-        {
-            sheepclone = SDL_LoadBMP("images/sheep.bmp");
-        }
-
         send_sheep(socket, ClientSpaceSheep.x, ClientSpaceSheep.y);
    
         while (SDLNet_CheckSockets(set, 0))
