@@ -16,7 +16,7 @@
 #include "globals.h"
 
 
-enum Protocal { SHEEP, ASTEROIDS, DONT_SEND_AST};
+enum Protocal { SHEEP, ASTEROIDS, DONT_SEND_AST, SEND_RED, SEND_PURPLE};
 
 void init()
 {
@@ -304,6 +304,41 @@ void fill_in(const int & safe)
     }
 }
 
+bool client_collision_check(SDL_Rect & rect, Asteroid & asteroid, bool & alive)
+{
+    // Takes the rect of the sheep
+    int right2 = rect.x + rect.w;
+    int bottom2 = rect.y + rect.h;
+    bool check = false;
+    
+    if (asteroid.screen)
+    {
+        bool flag = true;
+        
+        int left1 = asteroid.ast.x + 4;
+        int right1 = asteroid.ast.x + asteroid.ast.w - 2;
+        int top1 = asteroid.ast.y - 4;
+        int bottom1 = asteroid.ast.y + asteroid.ast.h - 2;
+        // Check edges
+        if ( left1 > right2 )// Left 1 is right of right 2
+            flag = false; // No collision
+        
+        if ( right1 < rect.x ) // Right 1 is left of left 2
+            flag = false; // No collision
+        
+        if ( top1 > bottom2 ) // Top 1 is below bottom 2
+            flag = false; // No collision
+        
+        if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
+            flag = false; // No collision
+        if (flag == true)
+        {
+            check = true;
+            return check;
+        }
+    }
+    return check;
+}
 // On clean up after project, this can be put inside of sheep class.
 bool collision_check(SDL_Rect & rect)
 {
@@ -450,6 +485,20 @@ void coord()
     SDL_FillRect(gameOver, NULL, SDL_MapRGB(gameOver->format, 0, 0, 0));
     
 }
+void send_red(TCPsocket client, bool active, Protocal protocal)
+{
+    int sent;
+    sent = SDLNet_TCP_Send(client, &protocal, sizeof(protocal));
+    if (sent != sizeof(client, protocal))
+    {
+        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+    }
+    sent = SDLNet_TCP_Send(client, &active, sizeof(active));
+    if (sent != sizeof(client, active))
+    {
+        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
+    }
+}
 
 void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen,
     Protocal protocal)
@@ -571,6 +620,7 @@ void serverMain()
         bool part1dead = false;
         bool part2dead = false;
         bool superdead = false;
+        bool red_sq = false;
         
         //sheep starting dimensions
         SpaceSheep.x = 300;
@@ -714,16 +764,15 @@ void serverMain()
             // Check to see if sheep(s) hits any asteroids
             if (collision_check(SpaceSheep)) 
             {
-                //part1dead = true;
+                part1dead = true;
                 sheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
                 SDL_FillRect(sheep, NULL, SDL_MapRGB(sheep->format, 255, 0, 0));
-                hit1 = true;
-                
+                hit1 = true;         
             }
             
             if (hit1)
                 ogclock++;
-
+            
             if (ogclock >= 75)
             {
                 sheep = SDL_LoadBMP("images/sheep.bmp");
@@ -731,7 +780,7 @@ void serverMain()
                 hit1 = false;
                 part1dead = false;
             }
-
+            
             if (client != 0)
             {
                 if (collision_check(ClientSpaceSheepClone)) 
@@ -1017,20 +1066,23 @@ void clientMain(const char * serverName)
     bool clientsheep_screen = true;
     // initialize score counter, create score object, and create score timer
     int clientscoreCount = 0;
-		Score clientscore;
+    Score clientscore;
     LTimer clientscoreTimer;
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
     int astindex;
     Protocal protocalRecv;
+    bool sheep_screen = true;
+    bool red_sq = false;
 
     int ogclock = 0;
     int ogclock2 = 0;
-        bool hit1 = false;
-        bool hit2 = false;
-        bool part1dead = false;
-        bool part2dead = false;
-        bool superdead = false;
+
+    bool hit1 = false;
+    bool hit2 = false;
+    bool part1dead = false;
+    bool part2dead = false;
+    bool superdead = false;
 
     SpaceSheep.x = 300;
     SpaceSheep.y = 200;
@@ -1107,6 +1159,7 @@ void clientMain(const char * serverName)
                 ClientSpaceSheep.x += ClientsheepSpeedX;
             }
         }
+<<<<<<< HEAD
 
 
         // Check to see if sheep(s) hits any asteroids
@@ -1158,8 +1211,19 @@ void clientMain(const char * serverName)
                     clientquit = true;
                 }
 
+        if (red_sq)
+        {
+            sheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+            SDL_FillRect(sheepclone, NULL, SDL_MapRGB(sheepclone->format, 255, 0, 0));
+              
+        }
+        else
+        {
+            sheepclone = SDL_LoadBMP("images/sheep.bmp");
+        }
 
         send_sheep(socket, ClientSpaceSheep.x, ClientSpaceSheep.y);
+   
         while (SDLNet_CheckSockets(set, 0))
         {
             int got = SDLNet_TCP_Recv(socket, &protocalRecv, sizeof(protocalRecv));
@@ -1188,28 +1252,35 @@ void clientMain(const char * serverName)
                 asteroidCL[astindex].ast.x = x;
                 asteroidCL[astindex].ast.y = y;
             }
+            else if (protocalRecv == SEND_RED)
+            {
+                SDLNet_TCP_Recv(socket, &sheepclone, sizeof(sheepclone));
+            }
         }
         SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
-        // WHY ISN'T THIS PRINTING OH LORD
+
+        
         for (int i = 0; i < 100; ++i)
         {
             SDL_BlitScaled(asteroidCL[i].asteroid, NULL,
                             gScreenSurface, &asteroidCL[i].ast);
         }
-    
-        
+
     
         SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
         SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
         SDL_BlitScaled(bor3, NULL, gScreenSurface, &border3);
         SDL_BlitScaled(bor4, NULL, gScreenSurface, &border4);
-        
+
+       
+        // finally blit sheep
+        SDL_BlitScaled(sheepclone, NULL, gScreenSurface, &SpaceSheep); 
         SDL_BlitScaled(clientsheep, NULL, gScreenSurface,
-                       &ClientSpaceSheep);
-        SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
-                       &SpaceSheep);
+                               &ClientSpaceSheep);
+            
         
         
+    
         // Display the client score on the client (obviously)
         SDL_Color clientscore_color = {255, 0, 0}; // Sets color of score
         clientscore.surface = TTF_RenderText_Solid(font, std::to_string(clientscoreCount).c_str(), clientscore_color);

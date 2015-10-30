@@ -1,0 +1,31 @@
+//-------------------------------------------------\\
+		Jesse, Austin, and Sam
+		CISS465 Project 2 Networking
+		Network Plan
+//-------------------------------------------------\\
+(Aka Flags)
+Protocal's used: SEND_SHIP, SEND_ASTEROIDS 
+
+How to send ships over Server to Client:
+Server/Host side: There will be a constant check to see if the client has
+openned up a socket to send data through. If so, it immediately sends a flag
+to the client, notifying that the next two incoming data segments are x and y
+coordinates for a ship. 
+
+How to send ships over Client to Server: 
+After client has started up, before checking the received data, it sends a flag
+to the server, notifying that the next two incoming data segmeents are x and y.
+
+This is done before checking the received data from the server, 
+this confirms if we have established a send connection to the server.
+
+How we obtain data for both server and client:
+By the use of flags or protocal's, we ensure the flow of information from 
+Server to client. The client is receiving the terrain and host ship. By using
+two seperate protocal tracking, we determine which information is being sent
+over to the client. Since the server only has to receive the client ship, 
+a single protocal is used to check for incoming data. 
+
+TLDR: Server sends terrain and ship using protocal flags, client receives those
+protocals to determine which information is incoming, and sends it's position
+of the ship.
