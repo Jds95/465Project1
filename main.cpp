@@ -907,10 +907,55 @@ void serverMain()
     close();   
 }
 
+    Asteroid asteroidCL[100];
+
+	bool client_collision_check(SDL_Rect & rect)
+	{
+	    // Takes the rect of the sheep
+    	int right2 = rect.x + rect.w;
+    	int bottom2 = rect.y + rect.h;
+    	bool check = false;
+    
+	    // Find edges of rect for the asteroid array if it is on the screen
+    	for (int i = 0; i < 100; ++i)
+    	{
+        	if (asteroidCL[i].screen)
+        	{
+         	   bool flag = true;
+            
+            	int left1 = asteroidCL[i].ast.x + 4;
+            	int right1 = asteroidCL[i].ast.x + asteroidCL[i].ast.w - 2;
+            	int top1 = asteroidCL[i].ast.y - 4;
+            	int bottom1 = asteroidCL[i].ast.y + asteroidCL[i].ast.h - 2;
+            	// Check edges
+            	if ( left1 > right2 )// Left 1 is right of right 2
+	                flag = false; // No collision
+            
+	            if ( right1 < rect.x ) // Right 1 is left of left 2
+	                flag = false; // No collision
+            	
+	            if ( top1 > bottom2 ) // Top 1 is below bottom 2
+	                flag = false; // No collision
+            	
+	            if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
+	                flag = false; // No collision
+	            if (flag == true)
+	            {
+	                check = true;
+	                return check;
+	            }
+	        }
+	    }
+	    return check;
+	}
 
 
 void clientMain(const char * serverName)
 {
+
+
+
+
     //Sheep image    
     SDL_Surface* sheepclone = NULL;
     SDL_Surface* clientsheep = NULL;
@@ -966,7 +1011,7 @@ void clientMain(const char * serverName)
     
     //Event handler
     SDL_Event e;
-    Asteroid asteroid[100];
+
     double ClientsheepSpeedX = 3;         //sheep speed, duh
     double ClientsheepSpeedY = 3.5; 
     bool clientsheep_screen = true;
@@ -978,6 +1023,14 @@ void clientMain(const char * serverName)
     SDL_Rect SpaceSheep;
     int astindex;
     Protocal protocalRecv;
+
+    int ogclock = 0;
+    int ogclock2 = 0;
+        bool hit1 = false;
+        bool hit2 = false;
+        bool part1dead = false;
+        bool part2dead = false;
+        bool superdead = false;
 
     SpaceSheep.x = 300;
     SpaceSheep.y = 200;
@@ -1054,6 +1107,58 @@ void clientMain(const char * serverName)
                 ClientSpaceSheep.x += ClientsheepSpeedX;
             }
         }
+
+
+        // Check to see if sheep(s) hits any asteroids
+
+            if (client_collision_check(ClientSpaceSheep)) 
+            {
+                //part1dead = true;
+                clientsheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+                SDL_FillRect(clientsheep, NULL, SDL_MapRGB(clientsheep->format, 255, 0, 0));
+                hit1 = true;
+                
+            }
+            
+            if (hit1)
+                ogclock++;
+
+            if (ogclock >= 75)
+            {
+                clientsheep = SDL_LoadBMP("images/sheep.bmp");
+                ogclock = 0;
+                hit1 = false;
+                part1dead = false;
+            }
+
+                if (client_collision_check(SpaceSheep)) 
+                {
+                    part2dead = true;
+                    sheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+                    SDL_FillRect(sheepclone, NULL, SDL_MapRGB(sheepclone->format, 255, 0, 255));
+                    hit2 = true;
+                }
+
+                if (hit2)
+                    ogclock2++;
+
+                if (ogclock2 >= 75)
+                {
+                    sheepclone = SDL_LoadBMP("images/sheep.bmp");
+                    ogclock2 = 0;
+                    hit2 = false;
+                    part2dead = false;
+                }
+
+                if (part1dead == true && part2dead == true)
+                    superdead = true;
+
+                if (superdead == true)
+                {
+                    clientquit = true;
+                }
+
+
         send_sheep(socket, ClientSpaceSheep.x, ClientSpaceSheep.y);
         while (SDLNet_CheckSockets(set, 0))
         {
@@ -1079,17 +1184,17 @@ void clientMain(const char * serverName)
                 bool asteroidscreen;
                 SDLNet_TCP_Recv(socket, &asteroidscreen, sizeof(asteroidscreen));
                 
-                asteroid[astindex].screen = asteroidscreen;
-                asteroid[astindex].ast.x = x;
-                asteroid[astindex].ast.y = y;
+                asteroidCL[astindex].screen = asteroidscreen;
+                asteroidCL[astindex].ast.x = x;
+                asteroidCL[astindex].ast.y = y;
             }
         }
         SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
         // WHY ISN'T THIS PRINTING OH LORD
         for (int i = 0; i < 100; ++i)
         {
-            SDL_BlitScaled(asteroid[i].asteroid, NULL,
-                            gScreenSurface, &asteroid[i].ast);
+            SDL_BlitScaled(asteroidCL[i].asteroid, NULL,
+                            gScreenSurface, &asteroidCL[i].ast);
         }
     
         
