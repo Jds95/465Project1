@@ -15,11 +15,17 @@ Build instructions:
 **You will need the following libraries installed to run the game:**
 + SDL2_image
 + SDL2_ttf
-+ SDL2_mixer
++ SDL2_Net
 
 **Once downloaded and in the game directory, run the following commands in the Terminal:**
 + *make*
 + *make run* or *./main*
++ Enjoy!
+
+**If you are wishing to play multiplayer:**
++ *make*
++ *make run or *./main*
++ *make client*
 + Enjoy!
 
 Game play instructions
