@@ -438,6 +438,8 @@ void coord()
     //score text position
     scoreText.x = 450;
     scoreText.y = 30;
+    clientscoreText.x = 450;
+    clientscoreText.y = 30;
     
     // play text position
     playAgain.x = 225;
@@ -740,14 +742,14 @@ void serverMain()
                     std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
                 }
                           
-                /*
-                  for (int i = 0; i < 100; ++i)
+                
+                  /*for (int i = 0; i < 100; ++i)
                   {
                   int astindex = i;
                   send_asteroid(asteroid[i], astindex, client);
                   
-                  }
-                */
+                  }*/
+                
 
                 // FOR SOME REASON GETTING STUCK INSDIE THIS BLOCK AND NOT
                 // RETURNING TO GAME LOOP
@@ -770,8 +772,6 @@ void serverMain()
                                               sizeof(ClientSpaceY));
                         ClientSpaceSheepClone.x = ClientSpaceX;
                         ClientSpaceSheepClone.y = ClientSpaceY;
-                        
-                        
                     }    
                 }
                 std::cout << "Do I exit the netcheck" << std::endl;
@@ -901,7 +901,7 @@ void clientMain(const char * serverName)
     bool send_info = false;
     // initialize score counter, create score object, and create score timer
     int clientscoreCount = 0;
-    Score clientscore;
+		Score clientscore;
     LTimer clientscoreTimer;
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
@@ -915,7 +915,6 @@ void clientMain(const char * serverName)
     ClientSpaceSheep.y = 200;
     ClientSpaceSheep.w = 25;
     ClientSpaceSheep.h = 25;
-    
     
     //While application is running
     while( !clientquit )
@@ -1058,6 +1057,10 @@ void clientMain(const char * serverName)
         SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
                        &SpaceSheep);
         
+        SDL_Color clientscore_color = {255, 0, 0};
+        clientscore.surface = TTF_RenderText_Solid(font, std::to_string(clientscoreCount).c_str(), clientscore_color);
+        SDL_BlitSurface(clientscoreTxt, NULL, gScreenSurface, &clientscoreText);
+        SDL_BlitSurface(clientscore.surface, NULL, gScreenSurface, &clientscore.rect);
     
     
     
