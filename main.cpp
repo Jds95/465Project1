@@ -481,8 +481,6 @@ void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen)
     //std::cout << astindex << ' ' << x << ' ' << y << ' '
     //          << screen << std::endl;
 }
-
-
 void send_sheep(TCPsocket socket, int x, int y)
 {
     int tracker = 1;
@@ -694,13 +692,33 @@ void serverMain()
                 }
             }
             // Check to see if sheep hits any asteroids
-            //if (collision_check(SpaceSheep)) 
-            //{
-            //    sheep_screen = false;
-            //    scoreTimer.stop();
-            //    quit = true;
-            //}
-            // Check to see if sheep is alive
+            bool part1dead = false;
+            bool part2dead = false;
+            bool superdead = false;
+
+            if (collision_check(SpaceSheep)) 
+            {
+               part1dead = true;
+
+            }
+
+            if (collision_check(ClientSpaceSheepClone)) 
+            {
+               part2dead = true;
+            }
+
+            if (part1dead == true && part2dead == true)
+            {
+                superdead = true;
+            }
+
+            if (superdead == true)
+            {
+                sheep_screen = false;
+                scoreTimer.stop();
+                quit = true;
+            }
+
             if (sheep_screen)
             {
                 // finally blit sheep
