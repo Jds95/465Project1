@@ -487,7 +487,8 @@ void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen,
 void send_sheep(TCPsocket socket, int x, int y)
 {
     Protocal protocal = SHEEP;
-    int sent = SDLNet_TCP_Send(socket, &protocal,
+    int sent;
+    sent = SDLNet_TCP_Send(socket, &protocal,
                                sizeof(protocal));
     if (sent != sizeof(socket, protocal))
     {
@@ -534,8 +535,8 @@ void serverMain()
     }
 
     // Open the socket to listen for connections from the client
-    TCPsocket socket = SDLNet_TCP_Open(&ip);
-    if(!socket)
+    TCPsocket listner = SDLNet_TCP_Open(&ip);
+    if(!listner)
     {
         std::cerr << "SDLNet_TCP_Open: " << SDLNet_GetError() << std::endl;
         return;
@@ -660,18 +661,25 @@ void serverMain()
             {
                 timer.start();
             }
+
+            SDL_BlitScaled(back, NULL, gScreenSurface, &background);
             
-            SDL_BlitScaled(back, NULL, gScreenSurface, &background);    // blit background behind everything
             terr_generation(); // Random generate asteroids
             fill_in(safe); // Fill in array 
             terr_print(); // Does final overlap check through array
             paint(); // If they are on screen paint
-            SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
+           
+            
+            
+            SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);
             SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
             SDL_BlitScaled(bor3, NULL, gScreenSurface, &border3);
             SDL_BlitScaled(bor4, NULL, gScreenSurface, &border4);
+
             safe_zone(safe);
             protocal = ASTEROIDS;
+            
+        
             // Conditional to swap Safe Zones
             if (timer.getTicks() % 750 > 500)
             {
@@ -789,7 +797,7 @@ void serverMain()
             //Check to see if someone wants to connect
             if (client == NULL)
             {
-                client = SDLNet_TCP_Accept(socket);
+                client = SDLNet_TCP_Accept(listner);
                 //If it isn't zero anymore, the client socket is now connected
                 //Add it to the SocketSet so that we can check it for data later
                 if (client != NULL)
@@ -809,6 +817,7 @@ void serverMain()
                     {
                         if (asteroid[i].screen)
                         {
+                            protocal = ASTEROIDS;
                             int index = i;
                             send_asteroid(client, asteroid[i].ast.x,
                                           asteroid[i].ast.y, index,
@@ -823,10 +832,9 @@ void serverMain()
                 // WHAT THE HELL IS WRONG WITH THIS FUNCTIONG GOD
                 //-=-=-==-=-=-=-=-=--=-==--==-=-=-=-=-=--==--=-=-=
                 //-=-=-==--==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-                /*
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    int got = SDLNet_TCP_Recv(socket, &protocal,
+                    int got = SDLNet_TCP_Recv(client, &protocal,
                                               sizeof(protocal));
                     if (got <= 0)
                     {
@@ -835,25 +843,15 @@ void serverMain()
                     }
                     if (protocal == SHEEP)
                     {
-                    std::cout << "Do we enter here\n";
-                    
-                    
-                    SDLNet_TCP_Recv(socket,&ClientSpaceSheepClone.x,
-                    sizeof(ClientSpaceSheepClone.x));
-                    SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
-                    sizeof(ClientSpaceSheepClone.y));
-                    std::cout << "Do we get this far\n";
-                    }
-                    
-                    
-                    }
-                */
+                        SDLNet_TCP_Recv(client,&ClientSpaceSheepClone.x,
+                                        sizeof(ClientSpaceSheepClone.x));
+                        SDLNet_TCP_Recv(client, &ClientSpaceSheepClone.y,
+                                        sizeof(ClientSpaceSheepClone.y));
+                    }  
+                }
                 protocal = DONT_SEND_AST;
-                //std::cout << "Do we exit the while loop" << '\n';
-                
-=======
-                // }
             }
+            
             // GAME OVER screen
             while (quit)
             {         
@@ -897,7 +895,7 @@ void serverMain()
             
         }             
     }
-    SDLNet_TCP_Close(socket);
+    SDLNet_TCP_Close(listner);
     SDLNet_TCP_Close(client);
     
     SDL_FreeSurface (sheep);
@@ -1073,20 +1071,19 @@ void clientMain(const char * serverName)
                 int astindex;
                 SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
                 int x;
-                asteroid[astindex].ast.x = SDLNet_TCP_Recv(socket, &x,
-                                                           sizeof(x));
+                SDLNet_TCP_Recv(socket, &x, sizeof(x));
                 int y;
-                asteroid[astindex].ast.y = SDLNet_TCP_Recv(socket, &y,
-                                sizeof(y));
-            
+                SDLNet_TCP_Recv(socket, &y, sizeof(y));
                 
                 bool asteroidscreen;
-                asteroid[astindex].screen = SDLNet_TCP_Recv(socket, &asteroidscreen, sizeof(asteroidscreen));
-                //std::cout << astindex << ' ' << asteroidx << ' '
-                //          << asteroidy << ' ' << asteroidscreen
-                //          << '\n';
+                SDLNet_TCP_Recv(socket, &asteroidscreen, sizeof(asteroidscreen));
+                
+                asteroid[astindex].screen = asteroidscreen;
+                asteroid[astindex].ast.x = x;
+                asteroid[astindex].ast.y = y;
             }
         }
+        // WHY ISN'T THIS PRINTING OH LORD
         for (int i = 0; i < 100; ++i)
         {
             asteroid[i].print();
