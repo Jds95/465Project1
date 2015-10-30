@@ -11,6 +11,7 @@ public:
         rect.w = 50;
         rect.h = 50;
     }
+
     SDL_Surface* surface;
     SDL_Rect rect;
 };

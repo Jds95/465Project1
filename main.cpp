@@ -461,10 +461,16 @@ void coord()
     gameOverScreen.y = 0;
     gameOverScreen.w = 640;
     gameOverScreen.h = 480;
+    clientgameOverScreen.x = 0;
+    clientgameOverScreen.y = 0;
+    clientgameOverScreen.w = 640;
+    clientgameOverScreen.h = 480;
     
     //gameover text position
     gameOverText.x = 255;
     gameOverText.y = 150;
+    clientgameOverText.x = 255;
+    clientgameOverText.y = 150;
     
     //score text position
     scoreText.x = 450;
@@ -917,6 +923,7 @@ void serverMain()
                 }
                 
                 
+                
                 gameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
                 scoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
                 play = TTF_RenderText_Solid(font, "Thanks for Playing!", {255,0,0});
@@ -1159,14 +1166,13 @@ void clientMain(const char * serverName)
                 ClientSpaceSheep.x += ClientsheepSpeedX;
             }
         }
-<<<<<<< HEAD
 
 
         // Check to see if sheep(s) hits any asteroids
 
             if (client_collision_check(ClientSpaceSheep)) 
             {
-                //part1dead = true;
+                part1dead = true;
                 clientsheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
                 SDL_FillRect(clientsheep, NULL, SDL_MapRGB(clientsheep->format, 255, 0, 0));
                 hit1 = true;
@@ -1276,10 +1282,50 @@ void clientMain(const char * serverName)
         SDL_BlitSurface(clientscoreTxt, NULL, gScreenSurface, &clientscoreText);
         SDL_BlitSurface(clientscore.surface, NULL, gScreenSurface, &clientscore.rect);
         
+     	
+        
         SDL_UpdateWindowSurface(gWindow);
         SDL_Delay(20);
     }
     
+    // Display score and other text/stuff when game has ended
+    while (clientquit)
+    {
+    	bool closeGame = false;
+        //Handle events on queue
+        if( SDL_PollEvent( &e ) != 0 )
+        {
+            //User requests quit
+            if( e.type == SDL_QUIT )
+            {
+                closeGame = true;
+            }     
+        }
+
+        
+		clientgameOverTxt = TTF_RenderText_Solid(font, "Game Over", {255,0,0});
+        clientscoreTxt = TTF_RenderText_Solid(font, "Score:", {255,0,0});
+        play = TTF_RenderText_Solid(font, "Thanks for Playing!", {255,0,0});
+        SDL_BlitScaled(gameOver, NULL, gScreenSurface, &gameOverScreen);
+        
+        // Position score in center of screen
+        clientscore.rect.x = 350;
+        clientscore.rect.y = 200;
+        SDL_BlitSurface(clientgameOverTxt, NULL, gScreenSurface, &clientgameOverText);
+        clientscoreText.x = 240;
+        clientscoreText.y = 200;
+        SDL_BlitSurface(clientscoreTxt, NULL, gScreenSurface, &clientscoreText);
+        SDL_BlitSurface(clientscore.surface, NULL, gScreenSurface, &clientscore.rect);
+        SDL_BlitSurface(play, NULL, gScreenSurface, &playAgain);
+        
+        SDL_UpdateWindowSurface(gWindow);
+        SDL_Delay(20);
+        
+        // Close program
+        if ( closeGame ) break;
+    }
+    
+	
     
     SDL_FreeSurface (sheepclone);
     sheepclone = NULL;
@@ -1291,6 +1337,7 @@ void clientMain(const char * serverName)
     SDLNet_TCP_Close(socket);
     close();
 }
+
 
 int main(int argc, char* args[] )
 {
