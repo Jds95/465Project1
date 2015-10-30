@@ -928,6 +928,7 @@ void clientMain(const char * serverName)
                 clientquit = true;
             }                
         }
+        // Client score time isn't started? Start it already. Geez.
         if (!clientscoreTimer.isStarted())
         {
             clientscoreTimer.start();
@@ -1057,7 +1058,8 @@ void clientMain(const char * serverName)
         SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
                        &SpaceSheep);
         
-        SDL_Color clientscore_color = {255, 0, 0};
+        // Display the client score on the client (obviously)
+        SDL_Color clientscore_color = {255, 0, 0}; // Sets color of score
         clientscore.surface = TTF_RenderText_Solid(font, std::to_string(clientscoreCount).c_str(), clientscore_color);
         SDL_BlitSurface(clientscoreTxt, NULL, gScreenSurface, &clientscoreText);
         SDL_BlitSurface(clientscore.surface, NULL, gScreenSurface, &clientscore.rect);
