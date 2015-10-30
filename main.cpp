@@ -839,7 +839,8 @@ void serverMain()
                     if (got <= 0)
                     {
                         std::cerr << "Reciving protocal from client failed";
-                        return;
+                        quit = true;
+                        break;
                     }
                     if (protocal == SHEEP)
                     {
@@ -975,6 +976,7 @@ void clientMain(const char * serverName)
     LTimer clientscoreTimer;
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
+    int astindex;
     Protocal protocalRecv;
 
     SpaceSheep.x = 300;
@@ -1068,7 +1070,6 @@ void clientMain(const char * serverName)
             }
             else if (protocalRecv == ASTEROIDS)
             {
-                int astindex;
                 SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
                 int x;
                 SDLNet_TCP_Recv(socket, &x, sizeof(x));
@@ -1083,13 +1084,16 @@ void clientMain(const char * serverName)
                 asteroid[astindex].ast.y = y;
             }
         }
+        SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
         // WHY ISN'T THIS PRINTING OH LORD
         for (int i = 0; i < 100; ++i)
         {
-            asteroid[i].print();
+            SDL_BlitScaled(asteroid[i].asteroid, NULL,
+                            gScreenSurface, &asteroid[i].ast);
         }
+    
         
-        SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
+    
         SDL_BlitScaled(bor1, NULL, gScreenSurface, &border1);       // blit borders ontop of everything
         SDL_BlitScaled(bor2, NULL, gScreenSurface, &border2);
         SDL_BlitScaled(bor3, NULL, gScreenSurface, &border3);
