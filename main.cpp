@@ -15,8 +15,8 @@
 #include <iostream>
 #include "globals.h"
 
-
-enum Protocal { SHEEP, ASTEROIDS, DONT_SEND_AST, SEND_RED, SEND_PURPLE};
+// The idea to use enum protocal came from David and Dennis, Thanks!
+enum Protocal { SHEEP, ASTEROIDS, DONT_SEND_AST};
 
 void init()
 {
@@ -304,41 +304,6 @@ void fill_in(const int & safe)
     }
 }
 
-bool client_collision_check(SDL_Rect & rect, Asteroid & asteroid, bool & alive)
-{
-    // Takes the rect of the sheep
-    int right2 = rect.x + rect.w;
-    int bottom2 = rect.y + rect.h;
-    bool check = false;
-    
-    if (asteroid.screen)
-    {
-        bool flag = true;
-        
-        int left1 = asteroid.ast.x + 4;
-        int right1 = asteroid.ast.x + asteroid.ast.w - 2;
-        int top1 = asteroid.ast.y - 4;
-        int bottom1 = asteroid.ast.y + asteroid.ast.h - 2;
-        // Check edges
-        if ( left1 > right2 )// Left 1 is right of right 2
-            flag = false; // No collision
-        
-        if ( right1 < rect.x ) // Right 1 is left of left 2
-            flag = false; // No collision
-        
-        if ( top1 > bottom2 ) // Top 1 is below bottom 2
-            flag = false; // No collision
-        
-        if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
-            flag = false; // No collision
-        if (flag == true)
-        {
-            check = true;
-            return check;
-        }
-    }
-    return check;
-}
 // On clean up after project, this can be put inside of sheep class.
 bool collision_check(SDL_Rect & rect)
 {
@@ -491,69 +456,60 @@ void coord()
     SDL_FillRect(gameOver, NULL, SDL_MapRGB(gameOver->format, 0, 0, 0));
     
 }
-void send_red(TCPsocket client, bool active, Protocal protocal)
-{
-    int sent;
-    sent = SDLNet_TCP_Send(client, &protocal, sizeof(protocal));
-    if (sent != sizeof(client, protocal))
-    {
-        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-    }
-    sent = SDLNet_TCP_Send(client, &active, sizeof(active));
-    if (sent != sizeof(client, active))
-    {
-        std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
-    }
-}
 
 void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen,
     Protocal protocal)
 {
+    // Send current protocal to Client
     int sent = SDLNet_TCP_Send(client, &protocal, sizeof(protocal));
     if (sent != sizeof(client, protocal))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
+    // Send the index of the asteroid from the array
     sent = SDLNet_TCP_Send(client, &astindex, sizeof(astindex));
     if (sent != sizeof(client, astindex))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    
+    // Send the x coordinate for that asteroid[astindex]
     sent = SDLNet_TCP_Send(client, &x, sizeof(x));
     if (sent != sizeof(client, x))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-
+    // Send the y coordinate for that asteroid[asteindex]
     sent = SDLNet_TCP_Send(client, &y, sizeof(y));
     if (sent != sizeof(client, y))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
+    // Send the bool value for that asteroid[astindex] if it's on screen
     sent = SDLNet_TCP_Send(client, &screen, sizeof(screen));
     if (sent != sizeof(client, screen))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
-    //std::cout << astindex << ' ' << x << ' ' << y << ' '
-    //          << screen << std::endl;
 }
 void send_sheep(TCPsocket socket, int x, int y)
 {
+    // Set protocal to Sheep so client/server knows what it is receiving
     Protocal protocal = SHEEP;
     int sent;
+    // Send the protocal
     sent = SDLNet_TCP_Send(socket, &protocal,
                                sizeof(protocal));
     if (sent != sizeof(socket, protocal))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl; 
     }
+    // Send the x coordinate of the sheep
     sent = SDLNet_TCP_Send(socket, &x, sizeof(x));
     if (sent != sizeof(socket, x))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
+    // Send the y coordinate of the sheep
     sent = SDLNet_TCP_Send(socket, &y, sizeof(y));
     if (sent != sizeof(socket, y))
     {
@@ -564,9 +520,13 @@ void send_sheep(TCPsocket socket, int x, int y)
 
 void serverMain()
 {
-    //Sheep image    
+    //Sheep image
+    // Create local surface object for sheep
     SDL_Surface* sheep = NULL;
+    // Create local surface object for clientsheep
     SDL_Surface* clientsheepclone = NULL;
+    
+    // Load the images to the surfaces
     sheep = SDL_LoadBMP("images/sheep.bmp");
     if( sheep == NULL )
     {
@@ -578,7 +538,7 @@ void serverMain()
         printf( "Failed to load stretching image!\n" );
     }
     
-   
+    
     // Connection information
     IPaddress ip;
     
@@ -588,7 +548,7 @@ void serverMain()
         std::cerr << "SDLNet_ResolveHost: " << SDLNet_GetError() << std::endl;
         return;
     }
-
+    
     // Open the socket to listen for connections from the client
     TCPsocket listner = SDLNet_TCP_Open(&ip);
     if(!listner)
@@ -596,17 +556,18 @@ void serverMain()
         std::cerr << "SDLNet_TCP_Open: " << SDLNet_GetError() << std::endl;
         return;
     }
-        
+    // Set up the client
     TCPsocket client = 0;
-
+    
     // Prepare a SocketSet so we can check for messages from the client
     SDLNet_SocketSet set = SDLNet_AllocSocketSet(1);
-
+    
     // Load font for game
     font = TTF_OpenFont("includes/game_over.ttf",60);
     
     if (!menu(gScreenSurface, font))
     {
+        
         //Main loop flag
         bool quit = false;
         
@@ -733,7 +694,7 @@ void serverMain()
             SDL_BlitScaled(bor4, NULL, gScreenSurface, &border4);
 
             safe_zone(safe);
-            protocal = ASTEROIDS;
+            protocal = ASTEROIDS; // TIme to update client terrain
             
         
             // Conditional to swap Safe Zones
@@ -863,9 +824,10 @@ void serverMain()
                     }
                 }	
             }
-            
+            // If there is a client, we need to send data to the client
             if (client != 0)
             {
+                // If protocal is asteroids, send array of active asteroids 
                 if (protocal == ASTEROIDS)
                 {
                     for (int i = 0; i < 100; ++i)
@@ -880,13 +842,9 @@ void serverMain()
                         }
                     }
                 }
-            
+                // Send the Server sheep to the client's screen
                 send_sheep(client, SpaceSheep.x, SpaceSheep.y);
-                //==--=-=--=-==--=-==--==-=-=-=-=--==-=--=-==--=-=
-                //-===========================================-=-=    
-                // WHAT THE HELL IS WRONG WITH THIS FUNCTIONG GOD
-                //-=-=-==-=-=-=-=-=--=-==--==-=-=-=-=-=--==--=-=-=
-                //-=-=-==--==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                // Loop check to see if the client sends any information
                 while (SDLNet_CheckSockets(set, 0))
                 {
                     int got = SDLNet_TCP_Recv(client, &protocal,
@@ -963,55 +921,51 @@ void serverMain()
     close();   
 }
 
-    Asteroid asteroidCL[100];
+Asteroid asteroidCL[100];
 
-	bool client_collision_check(SDL_Rect & rect)
-	{
-	    // Takes the rect of the sheep
-    	int right2 = rect.x + rect.w;
-    	int bottom2 = rect.y + rect.h;
-    	bool check = false;
+bool client_collision_check(SDL_Rect & rect)
+{
+    // Takes the rect of the sheep
+    int right2 = rect.x + rect.w;
+    int bottom2 = rect.y + rect.h;
+    bool check = false;
     
-	    // Find edges of rect for the asteroid array if it is on the screen
-    	for (int i = 0; i < 100; ++i)
-    	{
-        	if (asteroidCL[i].screen)
-        	{
-         	   bool flag = true;
+    // Find edges of rect for the asteroid array if it is on the screen
+    for (int i = 0; i < 100; ++i)
+    {
+        if (asteroidCL[i].screen)
+        {
+            bool flag = true;
             
-            	int left1 = asteroidCL[i].ast.x + 4;
-            	int right1 = asteroidCL[i].ast.x + asteroidCL[i].ast.w - 2;
-            	int top1 = asteroidCL[i].ast.y - 4;
-            	int bottom1 = asteroidCL[i].ast.y + asteroidCL[i].ast.h - 2;
-            	// Check edges
-            	if ( left1 > right2 )// Left 1 is right of right 2
-	                flag = false; // No collision
+            int left1 = asteroidCL[i].ast.x + 4;
+            int right1 = asteroidCL[i].ast.x + asteroidCL[i].ast.w - 2;
+            int top1 = asteroidCL[i].ast.y - 4;
+            int bottom1 = asteroidCL[i].ast.y + asteroidCL[i].ast.h - 2;
+            // Check edges
+            if ( left1 > right2 )// Left 1 is right of right 2
+                flag = false; // No collision
             
-	            if ( right1 < rect.x ) // Right 1 is left of left 2
-	                flag = false; // No collision
-            	
-	            if ( top1 > bottom2 ) // Top 1 is below bottom 2
-	                flag = false; // No collision
-            	
-	            if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
-	                flag = false; // No collision
-	            if (flag == true)
-	            {
-	                check = true;
-	                return check;
-	            }
-	        }
-	    }
-	    return check;
-	}
+            if ( right1 < rect.x ) // Right 1 is left of left 2
+                flag = false; // No collision
+            
+            if ( top1 > bottom2 ) // Top 1 is below bottom 2
+                flag = false; // No collision
+            
+            if ( bottom1 < rect.y ) // Bottom 1 is above top 2 
+                flag = false; // No collision
+            if (flag == true)
+            {
+                check = true;
+                return check;
+            }
+        }
+    }
+    return check;
+}
 
 
 void clientMain(const char * serverName)
 {
-
-
-
-
     //Sheep image    
     SDL_Surface* sheepclone = NULL;
     SDL_Surface* clientsheep = NULL;
@@ -1080,7 +1034,6 @@ void clientMain(const char * serverName)
     int astindex;
     Protocal protocalRecv;
     bool sheep_screen = true;
-    bool red_sq = false;
 
     int ogclock = 0;
     int ogclock2 = 0;
@@ -1118,14 +1071,14 @@ void clientMain(const char * serverName)
         {
             clientscoreTimer.start();
         }
+       
         // update the score counter by 1 point every 1/10 of a second
         if (clientscoreTimer.getTicks() >= 100)
         {
             ++clientscoreCount;
             clientscoreTimer.stop();
-        }        
-
-       
+        }
+        
         const Uint8 *state = SDL_GetKeyboardState(NULL);
         if (state[SDL_SCANCODE_W])          //up
         {
@@ -1168,57 +1121,57 @@ void clientMain(const char * serverName)
         }
 
 
-        // Check to see if sheep(s) hits any asteroids
-
-            if (client_collision_check(ClientSpaceSheep)) 
-            {
-                part1dead = true;
-                clientsheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
-                SDL_FillRect(clientsheep, NULL, SDL_MapRGB(clientsheep->format, 255, 0, 0));
-                hit1 = true;
-                
-            }
+        if (client_collision_check(ClientSpaceSheep)) 
+        {
+            part1dead = true;
+            clientsheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+            SDL_FillRect(clientsheep, NULL, SDL_MapRGB(clientsheep->format, 255, 0, 0));
+            hit1 = true;
             
-            if (hit1)
-                ogclock++;
+        }
+        
+        if (hit1)
+            ogclock++;
+        
+        if (ogclock >= 75)
+        {
+            clientsheep = SDL_LoadBMP("images/sheep.bmp");
+            ogclock = 0;
+            hit1 = false;
+            part1dead = false;
+        }
+        
+        if (client_collision_check(SpaceSheep)) 
+        {
+            part2dead = true;
+            sheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+            SDL_FillRect(sheepclone, NULL, SDL_MapRGB(sheepclone->format, 255, 0, 255));
+            hit2 = true;
+        }
+        
+        if (hit2)
+            ogclock2++;
+        
+        if (ogclock2 >= 75)
+        {
+            sheepclone = SDL_LoadBMP("images/sheep.bmp");
+            ogclock2 = 0;
+            hit2 = false;
+            part2dead = false;
+        }
+        
+        if (part1dead == true && part2dead == true)
+            superdead = true;
+        
+        if (superdead == true)
+        {
+            clientquit = true;
+        }
 
-            if (ogclock >= 75)
-            {
-                clientsheep = SDL_LoadBMP("images/sheep.bmp");
-                ogclock = 0;
-                hit1 = false;
-                part1dead = false;
-            }
-
-                if (client_collision_check(SpaceSheep)) 
-                {
-                    part2dead = true;
-                    sheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
-                    SDL_FillRect(sheepclone, NULL, SDL_MapRGB(sheepclone->format, 255, 0, 255));
-                    hit2 = true;
-                }
-
-                if (hit2)
-                    ogclock2++;
-
-                if (ogclock2 >= 75)
-                {
-                    sheepclone = SDL_LoadBMP("images/sheep.bmp");
-                    ogclock2 = 0;
-                    hit2 = false;
-                    part2dead = false;
-                }
-
-                if (part1dead == true && part2dead == true)
-                    superdead = true;
-
-                if (superdead == true)
-                {
-                    clientquit = true;
-                }
-
+        // Client is open, send the information for client sheep to server
         send_sheep(socket, ClientSpaceSheep.x, ClientSpaceSheep.y);
-   
+
+        // Loop check to see if the server has sent any information
         while (SDLNet_CheckSockets(set, 0))
         {
             int got = SDLNet_TCP_Recv(socket, &protocalRecv, sizeof(protocalRecv));
@@ -1246,10 +1199,6 @@ void clientMain(const char * serverName)
                 asteroidCL[astindex].screen = asteroidscreen;
                 asteroidCL[astindex].ast.x = x;
                 asteroidCL[astindex].ast.y = y;
-            }
-            else if (protocalRecv == SEND_RED)
-            {
-                SDLNet_TCP_Recv(socket, &sheepclone, sizeof(sheepclone));
             }
         }
         SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
