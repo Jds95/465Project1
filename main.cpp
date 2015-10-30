@@ -431,6 +431,8 @@ void coord()
     //score text position
     scoreText.x = 450;
     scoreText.y = 30;
+    clientscoreText.x = 450;
+    clientscoreText.y = 30;
     
     // play text position
     playAgain.x = 225;
@@ -739,46 +741,44 @@ void serverMain()
             
             if (client != 0)
             {
-                for (int i = 0; i < 100; ++i)
+                int tracker = 1;
+                if (tracker == 1)
                 {
-                    if (asteroid[i].screen)
+                    for (int i = 0; i < 100; ++i)
                     {
-                        int index = i;
-                        send_asteroid(client, asteroid[i].ast.x,
-                                      asteroid[i].ast.y, index,
-                                      asteroid[i].screen);
+                        if (asteroid[i].screen)
+                        {
+                            int index = i;
+                            send_asteroid(client, asteroid[i].ast.x,
+                                          asteroid[i].ast.y, index,
+                                          asteroid[i].screen);
+                        }
                     }
                 }
-                
                 send_sheep(client, SpaceSheep.x, SpaceSheep.y);
-                // FOR SOME REASON GETTING STUCK INSDIE THIS BLOCK AND NOT
-                // RETURNING TO GAME LOOP
-                /*
+                //==--=-=--=-==--=-==--==-=-=-=-=--==-=--=-==--=-=
+                //-===========================================-=-=    
+                // WHAT THE HELL IS WRONG WITH THIS FUNCTIONG GOD
+                //-=-=-==-=-=-=-=-=--=-==--==-=-=-=-=-=--==--=-=-=
+                //-=-=-==--==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                   
                     SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
                     int ClientSpaceY;
                     int ClientSpaceX;
-                    std::cout << tracker << std::endl;
                     if (tracker == 1)
                     {
-                      
-                        SDLNet_TCP_Recv(socket,&ClientSpaceX,
-                                                  sizeof(ClientSpaceX));
-                        SDLNet_TCP_Recv(socket, &ClientSpaceY,
-                                              sizeof(ClientSpaceY));
-                        ClientSpaceSheepClone.x = ClientSpaceX;
-                        ClientSpaceSheepClone.y = ClientSpaceY;
-                           
+                        std::cout << "Do we enter here\n";
+                        
+                        SDLNet_TCP_Recv(socket,&ClientSpaceSheepClone.x,
+                                        sizeof(ClientSpaceSheepClone.x));
+                        SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
+                                        sizeof(ClientSpaceSheepClone.y));
+                        std::cout << "Do we get this far\n";
                     }
-                    std::cout << "Do I get here " << std::endl;
+                    
                 }
-                std::cout << "Do I exit the netcheck" << std::endl;
-                */
             }
-        
-            
             // GAME OVER screen
             while (quit)
             {
@@ -831,7 +831,7 @@ void serverMain()
             
         }             
 //Free resources and close SDL
-       
+        
         
         close();   
     }
@@ -902,7 +902,7 @@ void clientMain(const char * serverName)
     bool clientsheep_screen = true;
     // initialize score counter, create score object, and create score timer
     int clientscoreCount = 0;
-    Score clientscore;
+		Score clientscore;
     LTimer clientscoreTimer;
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
@@ -917,7 +917,6 @@ void clientMain(const char * serverName)
     ClientSpaceSheep.w = 25;
     ClientSpaceSheep.h = 25;
     
-    
     //While application is running
     while( !clientquit )
     {
@@ -930,6 +929,7 @@ void clientMain(const char * serverName)
                 clientquit = true;
             }                
         }
+        // Client score time isn't started? Start it already. Geez.
         if (!clientscoreTimer.isStarted())
         {
             clientscoreTimer.start();
@@ -1035,11 +1035,16 @@ void clientMain(const char * serverName)
                        &ClientSpaceSheep);
         SDL_BlitScaled(sheepclone, NULL, gScreenSurface,
                        &SpaceSheep);
-   
-    
-    
-    SDL_UpdateWindowSurface(gWindow);
-    SDL_Delay(20);
+        
+        
+        // Display the client score on the client (obviously)
+        SDL_Color clientscore_color = {255, 0, 0}; // Sets color of score
+        clientscore.surface = TTF_RenderText_Solid(font, std::to_string(clientscoreCount).c_str(), clientscore_color);
+        SDL_BlitSurface(clientscoreTxt, NULL, gScreenSurface, &clientscoreText);
+        SDL_BlitSurface(clientscore.surface, NULL, gScreenSurface, &clientscore.rect);
+        
+        SDL_UpdateWindowSurface(gWindow);
+        SDL_Delay(20);
     }
     
     
@@ -1048,8 +1053,8 @@ void clientMain(const char * serverName)
     
     SDL_FreeSurface (clientsheep);
     clientsheep = NULL;
-
-
+    
+    
     SDLNet_TCP_Close(socket);
     close();
 }

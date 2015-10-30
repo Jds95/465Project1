@@ -30,6 +30,7 @@ SDL_Rect background;    //background
 SDL_Rect gameOverScreen; //game over screen
 SDL_Rect gameOverText; // gameover text
 SDL_Rect scoreText; // score text
+SDL_Rect clientscoreText; // client score text
 SDL_Rect playAgain; // play again text
 SDL_Rect border1;   // top
 SDL_Rect border2;   // bottom
@@ -44,4 +45,5 @@ SDL_Surface *bor4;  // right
 SDL_Surface *gameOver; // gameover
 SDL_Surface *gameOverTxt; // gameover text
 SDL_Surface *scoreTxt; // score text
+SDL_Surface *clientscoreTxt; // client score text
 SDL_Surface *play; // play again text
