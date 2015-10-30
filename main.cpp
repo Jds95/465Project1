@@ -761,6 +761,7 @@ void serverMain()
                 // WHAT THE HELL IS WRONG WITH THIS FUNCTIONG GOD
                 //-=-=-==-=-=-=-=-=--=-==--==-=-=-=-=-=--==--=-=-=
                 //-=-=-==--==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                /*
                 while (SDLNet_CheckSockets(set, 0))
                 {
                     SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
@@ -778,6 +779,7 @@ void serverMain()
                     }
                     
                 }
+                */
             }
             // GAME OVER screen
             while (quit)
