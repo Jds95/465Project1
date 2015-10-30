@@ -15,6 +15,9 @@
 #include <iostream>
 #include "globals.h"
 
+
+enum Protocal { SHEEP, ASTEROIDS, DONT_SEND_AST};
+
 void init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -448,11 +451,11 @@ void coord()
     
 }
 
-void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen)
+void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen,
+    Protocal protocal)
 {
-    int tracker = 2;
-    int sent = SDLNet_TCP_Send(client, &tracker, sizeof(tracker));
-    if (sent != sizeof(client, tracker))
+    int sent = SDLNet_TCP_Send(client, &protocal, sizeof(protocal));
+    if (sent != sizeof(client, protocal))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl;
     }
@@ -483,10 +486,10 @@ void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen)
 }
 void send_sheep(TCPsocket socket, int x, int y)
 {
-    int tracker = 1;
-    int sent = SDLNet_TCP_Send(socket, &tracker,
-                               sizeof(tracker));
-    if (sent != sizeof(socket, tracker))
+    Protocal protocal = SHEEP;
+    int sent = SDLNet_TCP_Send(socket, &protocal,
+                               sizeof(protocal));
+    if (sent != sizeof(socket, protocal))
     {
         std::cerr << "SDLNet_TCP_Send: " << SDLNet_GetError() << std::endl; 
     }
@@ -558,6 +561,7 @@ void serverMain()
         double sheepSpeedY = 3.5; 
         bool sheep_screen = true;   //is sheep alive
         SDL_Rect SpaceSheep;    // sheep
+        Protocal protocal;
         
         
         
@@ -661,6 +665,7 @@ void serverMain()
             SDL_BlitScaled(bor3, NULL, gScreenSurface, &border3);
             SDL_BlitScaled(bor4, NULL, gScreenSurface, &border4);
             safe_zone(safe);
+            protocal = ASTEROIDS;
             // Conditional to swap Safe Zones
             if (timer.getTicks() % 750 > 500)
             {
@@ -698,7 +703,7 @@ void serverMain()
 
             if (collision_check(SpaceSheep)) 
             {
-               part1dead = true;
+                //part1dead = true;
 
             }
 
@@ -759,8 +764,7 @@ void serverMain()
             
             if (client != 0)
             {
-                int tracker = 1;
-                if (tracker == 1)
+                if (protocal == ASTEROIDS)
                 {
                     for (int i = 0; i < 100; ++i)
                     {
@@ -769,10 +773,11 @@ void serverMain()
                             int index = i;
                             send_asteroid(client, asteroid[i].ast.x,
                                           asteroid[i].ast.y, index,
-                                          asteroid[i].screen);
+                                          asteroid[i].screen, protocal);
                         }
                     }
                 }
+            
                 send_sheep(client, SpaceSheep.x, SpaceSheep.y);
                 //==--=-=--=-==--=-==--==-=-=-=-=--==-=--=-==--=-=
                 //-===========================================-=-=    
@@ -782,10 +787,14 @@ void serverMain()
                 /*
                 while (SDLNet_CheckSockets(set, 0))
                 {
-                    SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
-                    int ClientSpaceY;
-                    int ClientSpaceX;
-                    if (tracker == 1)
+                    int got = SDLNet_TCP_Recv(socket, &protocal,
+                                              sizeof(protocal));
+                    if (got <= 0)
+                    {
+                        std::cerr << "Reciving protocal from client failed";
+                        return;
+                    }
+                    if (protocal == SHEEP)
                     {
                         std::cout << "Do we enter here\n";
                         
@@ -798,19 +807,13 @@ void serverMain()
                     
                 }
                 */
+                protocal = DONT_SEND_AST;
+                //std::cout << "Do we exit the while loop" << '\n';
+                
             }
             // GAME OVER screen
             while (quit)
-            {
-                SDLNet_TCP_Close(socket);
-                SDLNet_TCP_Close(client);
-                
-                SDL_FreeSurface (sheep);
-                sheep = NULL;
-                
-                SDL_FreeSurface (clientsheepclone);
-                clientsheepclone = NULL;
-                
+            {         
                 bool closeGame = false;
                 //Handle events on queue
                 if( SDL_PollEvent( &e ) != 0 )
@@ -850,11 +853,16 @@ void serverMain()
             SDL_Delay(20); 
             
         }             
-//Free resources and close SDL
-        
-        
-        close();   
     }
+    SDLNet_TCP_Close(socket);
+    SDLNet_TCP_Close(client);
+    
+    SDL_FreeSurface (sheep);
+    sheep = NULL;
+    
+    SDL_FreeSurface (clientsheepclone);
+    clientsheepclone = NULL;
+    close();   
 }
 
 
@@ -916,7 +924,7 @@ void clientMain(const char * serverName)
     
     //Event handler
     SDL_Event e;
-    Asteroid clientAsteroid[100];
+    Asteroid asteroid[100];
     double ClientsheepSpeedX = 3;         //sheep speed, duh
     double ClientsheepSpeedY = 3.5; 
     bool clientsheep_screen = true;
@@ -926,6 +934,7 @@ void clientMain(const char * serverName)
     LTimer clientscoreTimer;
     SDL_Rect ClientSpaceSheep;
     SDL_Rect SpaceSheep;
+    Protocal protocalRecv;
 
     SpaceSheep.x = 300;
     SpaceSheep.y = 200;
@@ -1005,36 +1014,31 @@ void clientMain(const char * serverName)
         send_sheep(socket, ClientSpaceSheep.x, ClientSpaceSheep.y);
         while (SDLNet_CheckSockets(set, 0))
         {
-            int tracker;
-            int got = SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
-            if (tracker == 1)
+            int got = SDLNet_TCP_Recv(socket, &protocalRecv, sizeof(protocalRecv));
+            if (got <= 0)
+            {
+                std::cerr << "Failed to get protocal" << std::endl;
+            }
+            if (protocalRecv == SHEEP)
             {
                 SDLNet_TCP_Recv(socket, &SpaceSheep.x, sizeof(SpaceSheep.x));
                 SDLNet_TCP_Recv(socket, &SpaceSheep.y, sizeof(SpaceSheep.y));
              
             }
-            else if (tracker == 2)
+            else if (protocalRecv == ASTEROIDS)
             {
                 int astindex;
                 SDLNet_TCP_Recv(socket, &astindex, sizeof(astindex));
-                std::cout << astindex << ' ';
-                
-                int asteroidx;
-                SDLNet_TCP_Recv(socket, &asteroidx,
-                                sizeof(asteroidx));
-                std::cout << asteroidx << ' ';
-                clientAsteroid[astindex].ast.x = asteroidx;
-                int asteroidy;
-                SDLNet_TCP_Recv(socket, &asteroidy,
-                                sizeof(asteroidy));
-                std::cout << asteroidy << ' ';
-                clientAsteroid[astindex].ast.y = asteroidy;
+                int x;
+                asteroid[astindex].ast.x = SDLNet_TCP_Recv(socket, &x,
+                                                           sizeof(x));
+                int y;
+                asteroid[astindex].ast.y = SDLNet_TCP_Recv(socket, &y,
+                                sizeof(y));
+            
                 
                 bool asteroidscreen;
-                SDLNet_TCP_Recv(socket, &asteroidscreen,
-                                sizeof(asteroidscreen));
-                std::cout << asteroidscreen << std::endl;
-                clientAsteroid[astindex].screen = asteroidscreen;
+                asteroid[astindex].screen = SDLNet_TCP_Recv(socket, &asteroidscreen, sizeof(asteroidscreen));
                 //std::cout << astindex << ' ' << asteroidx << ' '
                 //          << asteroidy << ' ' << asteroidscreen
                 //          << '\n';
@@ -1042,7 +1046,7 @@ void clientMain(const char * serverName)
         }
         for (int i = 0; i < 100; ++i)
         {
-            clientAsteroid[i].print();
+            asteroid[i].print();
         }
         
         SDL_BlitScaled(back, NULL, gScreenSurface, &background); 
