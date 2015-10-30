@@ -481,8 +481,6 @@ void send_asteroid(TCPsocket client, int x, int y, int astindex, bool screen)
     //std::cout << astindex << ' ' << x << ' ' << y << ' '
     //          << screen << std::endl;
 }
-
-
 void send_sheep(TCPsocket socket, int x, int y)
 {
     int tracker = 1;
