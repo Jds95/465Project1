@@ -14,13 +14,13 @@ coordinates for a ship.
 
 How to send ships over Client to Server: 
 After client has started up, before checking the received data, it sends a flag
-to the server, notifying that the next two incoming data segmeents are x and y.
+to the server, notifying that the next two incoming data segments are x and y
+coordinates for a ship.
 
-This is done before checking the received data from the server, 
-this confirms if we have established a send connection to the server.
+This ensures that we establish a proper communication between Server/Client.
 
 How we obtain data for both server and client:
-By the use of flags or protocal's, we ensure the flow of information from 
+By the use of flags or protocals, we ensure the flow of information from 
 Server to client. The client is receiving the terrain and host ship. By using
 two seperate protocal tracking, we determine which information is being sent
 over to the client. Since the server only has to receive the client ship, 
