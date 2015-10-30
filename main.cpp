@@ -559,7 +559,13 @@ void serverMain()
         bool sheep_screen = true;   //is sheep alive
         SDL_Rect SpaceSheep;    // sheep
         
-        
+        int ogclock = 0;
+        int ogclock2 = 0;
+        bool hit1 = false;
+        bool hit2 = false;
+        bool part1dead = false;
+        bool part2dead = false;
+        bool superdead = false;
         
         //sheep starting dimensions
         SpaceSheep.x = 300;
@@ -692,32 +698,66 @@ void serverMain()
                 }
             }
             // Check to see if sheep hits any asteroids
-            bool part1dead = false;
-            bool part2dead = false;
-            bool superdead = false;
+
 
             if (collision_check(SpaceSheep)) 
             {
                part1dead = true;
-
+               sheep = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+               SDL_FillRect(sheep, NULL, SDL_MapRGB(sheep->format, 255, 0, 0));
+               hit1 = true;
             }
 
-            if (collision_check(ClientSpaceSheepClone)) 
+            if (hit1)
+                ogclock++;
+
+            if (ogclock >= 75)
             {
-               part2dead = true;
+                sheep = SDL_LoadBMP("images/sheep.bmp");
+                ogclock = 0;
+                hit1 = false;
+                part1dead = false;
             }
 
-            if (part1dead == true && part2dead == true)
+            if (client != 0)
             {
-                superdead = true;
-            }
+                if (collision_check(ClientSpaceSheepClone)) 
+                {
+                    part2dead = true;
+                    clientsheepclone = SDL_CreateRGBSurface(0, 25, 25, 32, 0, 0, 0, 0);
+                    SDL_FillRect(clientsheepclone, NULL, SDL_MapRGB(clientsheepclone->format, 255, 0, 255));
+                    hit2 = true;
+                }
 
-            if (superdead == true)
-            {
-                sheep_screen = false;
-                scoreTimer.stop();
-                quit = true;
+                if (hit2)
+                    ogclock2++;
+
+                if (ogclock2 >= 75)
+                {
+                    clientsheepclone = SDL_LoadBMP("images/sheep.bmp");
+                    ogclock2 = 0;
+                    hit2 = false;
+                    part2dead = false;
+                }
+
+
+                if (part1dead == true && part2dead == true)
+                    superdead = true;
+
+                if (superdead == true)
+                {
+                    sheep_screen = false;
+                    scoreTimer.stop();
+                    quit = true;
+                }
             }
+            else
+                if (part1dead)
+                {
+                    sheep_screen = false;
+                    scoreTimer.stop();
+                    quit = true;
+                }
 
             if (sheep_screen)
             {
@@ -779,23 +819,23 @@ void serverMain()
                 // WHAT THE HELL IS WRONG WITH THIS FUNCTIONG GOD
                 //-=-=-==-=-=-=-=-=--=-==--==-=-=-=-=-=--==--=-=-=
                 //-=-=-==--==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-                while (SDLNet_CheckSockets(set, 0))
-                {
-                    SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
-                    int ClientSpaceY;
-                    int ClientSpaceX;
-                    if (tracker == 1)
-                    {
-                        std::cout << "Do we enter here\n";
+                // while (SDLNet_CheckSockets(set, 0))
+                // {
+                //     SDLNet_TCP_Recv(socket, &tracker, sizeof(tracker));
+                //     int ClientSpaceY;
+                //     int ClientSpaceX;
+                //     if (tracker == 1)
+                //     {
+                //         std::cout << "Do we enter here\n";
                         
-                        SDLNet_TCP_Recv(socket,&ClientSpaceSheepClone.x,
-                                        sizeof(ClientSpaceSheepClone.x));
-                        SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
-                                        sizeof(ClientSpaceSheepClone.y));
-                        std::cout << "Do we get this far\n";
-                    }
+                //         SDLNet_TCP_Recv(socket,&ClientSpaceSheepClone.x,
+                //                         sizeof(ClientSpaceSheepClone.x));
+                //         SDLNet_TCP_Recv(socket, &ClientSpaceSheepClone.y,
+                //                         sizeof(ClientSpaceSheepClone.y));
+                //         std::cout << "Do we get this far\n";
+                //     }
                     
-                }
+                // }
             }
             // GAME OVER screen
             while (quit)
